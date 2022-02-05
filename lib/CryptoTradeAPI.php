@@ -3,7 +3,7 @@ require_once('vendor/autoload.php');
 require_once('CoinbaseConnector.php');
 require_once('Config.php');
 
-class CryptoTradeBot extends CoinbaseConnector {
+class CryptoTradeAPI extends CoinbaseConnector {
     protected $profileId;
     protected $accounts;
 
@@ -36,18 +36,51 @@ class CryptoTradeBot extends CoinbaseConnector {
         return $this->createRequest($route, "GET");
     }
 
+    public function getTradingPair() {
+        return $this->createRequest("/products", "GET");
+    }
+
     public function convert($from, $to, $amount) {
-        $route = "/conversions";
         $body = [
             "profile_id" => $this->getProfileId(),
             "from" => $from,
             "to" => $to,
             "amount" => $amount,
         ];
-        return $this->createRequest($route, "POST", json_encode($body));
+        return $this->createRequest("/conversions", "POST", json_encode($body));
+    }
+
+    public function takeOrder($idProd, $funds, $side, $price) {
+        $body = [
+            "type" => "limit",
+            "side" => $side,
+            "stp" => "dc",
+            "time_in_force" => "GTC",
+            "cancel_after" => "min",
+            "post_only" => "false",
+            "product_id" => $idProd,
+            "size" => $funds,
+            "price" => $price,
+        ];
+        return $this->createRequest("/orders", "POST", json_encode($body));
+    }
+
+    public function getOrder($idOrder) {
+        $route = "/orders"."/".$idOrder;
+        return $this->createRequest($route, "GET");
     }
 
     public function getWallets() {
         return $this->createRequest("/coinbase-accounts", "GET");
+    }
+
+    public function getCandles($idProd, $granu = "60") {
+        $route = "/products"."/".$idProd."/candles?granularity=".$granu;
+        return $this->createSimpleRequest($route);
+    }
+
+    public function getCandlesFrom($idProd, $from, $to, $granu = "60") {
+        $route = "/products"."/".$idProd."/candles?granularity=".$granu."&start=".$from."&end=".$to;
+        return $this->createSimpleRequest($route);
     }
 }

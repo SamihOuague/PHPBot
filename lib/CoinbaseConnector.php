@@ -38,4 +38,20 @@ class CoinbaseConnector {
             return $e->getMessage();
         }
     }
+
+    public function createSimpleRequest($route) {
+        $client = new \GuzzleHttp\Client();
+        try {
+            $response = $client->request("GET", 'https://api.exchange.coinbase.com'. $route, [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+            $body = (string) $response->getBody();
+            return json_decode($body, true);
+        } catch(Exception $e) {
+            return $e->getMessage();
+        }
+    }
 }
