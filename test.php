@@ -29,18 +29,10 @@
 
 //file_put_contents("dataset.json", json_encode($candles));
 //var_dump($candles);
+$fund = 5000;
 
+for ($i = 0; $i < 30; $i++) {
+    $fund += $fund * 0.10;
+}
 
-
-
-
-
-
-[
-    1644019200,
-    0.0718,
-    0.07207,
-    0.07205,
-    0.07189,
-    75.21668194
-];
+echo round($fund, 2)."\n";

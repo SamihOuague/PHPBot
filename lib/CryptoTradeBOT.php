@@ -1,4 +1,5 @@
 <?php
+require_once("Wallet.php");
 
 class CryptoTradeBOT {
     protected $candles;
@@ -6,7 +7,9 @@ class CryptoTradeBOT {
     protected $walletB;
 
     public function __construct() {
-        $this->candles = json_decode(file_get_contents("dataset.json"));
+        $this->setCandles(json_decode(file_get_contents("dataset.json")));
+        $this->walletA = new Wallet("ETH", "1.0");
+        $this->walletB = new Wallet("BTC", "0.00000");
     }
 
     public function getRSI($period, $pos) {
@@ -44,21 +47,59 @@ class CryptoTradeBOT {
         return $this->candles;
     }
 
+    public function setCandles(array $candles) {
+        return $this->candles = $candles;
+    }
+
     public function getCandle(int $index) {
         return $this->candles[$index];
     }
 
-    public function simulateStrategie() {
-        $period = 14;
-        for($i = ($period + 1); $i < count($this->getCandles()); $i++) {
+    public function getWalletA() {
+        return $this->walletA;
+    }
+
+    public function getWalletB() {
+        return $this->walletB;
+    }
+
+    public function setWalletA($wallet) {
+        return $this->walletA = $wallet;
+    }
+
+    public function setWalletB($wallet) {
+        return $this->walletB = $wallet;
+    }
+
+    public function sell($price) {
+        $walletA = $this->getWalletA();
+        $walletB = $this->getWalletB();
+        if ($walletA->getFunds() > 0)
+            $this->setWalletB($walletA->sellAll($price, $walletB));
+    }
+
+    public function buy($price) {
+        $walletA = $this->getWalletA();
+        $walletB = $this->getWalletB();
+        if ($walletB->getFunds() > 0)
+            $this->setWalletA($walletB->buyAll($price, $walletA));
+    }
+
+    public function simulateStrategie($period = 14) {
+        $candles = $this->getCandles();
+        for($i = ($period + 1); $i < count($candles); $i++) {
             $rsi = $this->getRsi($period, $i);
-            if ($rsi > 70) {
-                echo "Sell : ". $rsi ."\n";
-                usleep(5000 * 100);
-            } elseif ($rsi < 30) {
-                echo "Buy : ". $rsi ."\n";
-                usleep(5000 * 100);
+            if ($rsi > 70 && $this->getWalletA()->getFunds() != 0) {
+                $this->sell($candles[$i][4]);
+                echo "SELL => ". $this->getWalletB()->getFunds()."\n";
+                //usleep(5000 * 100);
+            } elseif ($rsi < 30 && $this->getWalletB()->getFunds() != 0) {
+                $this->buy($candles[$i][4]);
+                echo "BUY => ". $this->getWalletA()->getFunds()."\n";
+                //usleep(5000 * 100);
             }
         }
+        $this->buy($candles[count($candles) - 1][4]);
+        return $this->getWalletA()->getFunds();
     }
 }
