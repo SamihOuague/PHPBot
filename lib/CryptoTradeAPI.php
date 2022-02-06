@@ -83,4 +83,9 @@ class CryptoTradeAPI extends CoinbaseConnector {
         $route = "/products"."/".$idProd."/candles?granularity=".$granu."&start=".$from."&end=".$to;
         return $this->createSimpleRequest($route);
     }
+
+    public function ticker($idProd) {
+        $route = "/products"."/". $idProd ."/ticker";
+        return $this->createSimpleRequest($route);
+    }
 }

@@ -4,8 +4,26 @@ require_once("./lib/CryptoTradeAPI.php");
 require_once("./lib/Wallet.php");
 
 $candles = json_decode(file_get_contents("dataset.json"));
-
+$api = new CryptoTradeAPI();
 $bot = new CryptoTradeBOT("1.0", $candles);
-echo $bot->simulateStrategy(14, 2.5, 4.5)." ETH\n";
-echo "\033[32m".round(($bot->getWins() / ($bot->getWins() + $bot->getLosses())) * 100)."% DE REUSSITE\n";
-echo "WINS => ". $bot->getWins()." LOSSES => ".$bot->getLosses()."\n";
+
+
+$lastTick = "";
+while(true) {
+    $tick = $api->ticker("ETH-BTC");
+    if (time() % 60 == 0) {
+        $start = date("Y-m-d\TH:i:s", (time() - (60 * (60 + 15))));
+        $candlesFrom = $api->getCandlesFrom("ETH-BTC", $start, date("Y-m-d\TH:i:s", time()));
+        if (count($candlesFrom) == 15) {
+            $bot->setCandles($candlesFrom);
+            $bot->makeDecision($tick["price"]);
+            //var_dump($bot->getCandles());
+        }
+    }
+    if ($lastTick != $tick["price"]) {
+        echo $tick["price"]."\n";
+        $lastTick = $tick["price"];
+        $bot->makeDecision($tick["price"]);
+    }
+    sleep(1);
+}

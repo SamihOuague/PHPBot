@@ -92,8 +92,10 @@ class CryptoTradeBOT {
         $walletB = $this->getWalletB();
         $this->available = true;
         $this->lastFunds = $walletA->getFunds();
-        if ($walletA->getFunds() > 0)
+        if ($walletA->getFunds() > 0) {
+            echo "DEEZ NUTS\n";
             $this->setWalletB($walletA->sellAll($price, $walletB));
+        }
     }
 
     public function buy($price) {
@@ -111,12 +113,12 @@ class CryptoTradeBOT {
         }
     }
 
-    public function makeDecision($period = 14, $perteMax = 3.5, $gainMax = 5.9) {
+    public function makeDecision($currentPrice, $perteMax = 3.5, $gainMax = 5.9, $period = 14) {
         $candles = $this->getCandles();
         $buyIt = false;
-        $rsi = $this->getRsi($period, count($candles) - 1);
+        $rsi = $this->getRsi($period, 0);
         if ($this->getWalletB()->getFunds() != 0) {
-            $btcToETH = ($this->getWalletB()->getFunds() / $candles[count($candles) - 1][4]);
+            $btcToETH = ($this->getWalletB()->getFunds() / $currentPrice);
             $decalage = $btcToETH - $this->lastFunds;
             if ($decalage < 0) {
                 $decalage *= -1;
@@ -131,13 +133,14 @@ class CryptoTradeBOT {
                 }
             }
         }
-        if ($rsi > 70) {
-            if ($this->getWalletA()->getFunds() != 0)
-                $this->sell($candles[count($candles) - 1][4]);
-        } elseif ($rsi < 30 || $buyIt) {
+        if ($rsi > 70 || $buyIt) {
             if ($this->getWalletB()->getFunds() != 0 && $this->available) {
                 $this->available = false;
-                $this->buy($candles[count($candles) - 1][4]);
+                $this->buy($currentPrice);
+            }
+        } elseif ($rsi < 30) {
+            if ($this->getWalletA()->getFunds() != 0) {
+                $this->sell($currentPrice);
             }
         }
     }
@@ -178,8 +181,6 @@ class CryptoTradeBOT {
             } elseif ($rsi < 30) {
                 if ($this->getWalletA()->getFunds() != 0) {
                     $this->sell($candles[$i][4]);
-                    //$this->available = false;
-                    //$this->buy($candles[$i][4]);
                 }
             }
         }
