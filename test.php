@@ -1,7 +1,7 @@
 <?php
-//require_once("./lib/CryptoTradeAPI.php");
+require_once("./lib/CryptoTradeAPI.php");
 
-//$bot = new CryptoTradeAPI();
+$bot = new CryptoTradeAPI();
 //$tradpair = $bot->getTradingPair();
 //$order = $bot->takeOrder("ETH-BTC", "0.95", "sell");
 
@@ -24,15 +24,20 @@
 //$candles = $bot->getCandlesFrom("ETH-BTC", $start, $end, 300);
 //$rsi = $bot->getRSI("ETH-BTC", "60", 14);
 //$candles = array_merge($candles, $bot->getCandlesFrom("ETH-BTC", $start, $end, 300));
-
-//echo $start." => ". $end ."\n";
-
+//
+////var_dump($candles);
+//$fund = 1000;
+//
+//for ($i = 0; $i < 730; $i++) {
+//    $fund += $fund * 0.01;
+//}
+//
+//echo round($fund, 2)."\n";
+//$candles = [];
+//for ($i = 1, $j = 2; $j < 31; $i++, $j++) {
+//    $day = ($i > 9) ? (string) $i : "0".$i;
+//    $start = getTime(["2021", "12", ($i > 9) ? (string) $i : "0".$i], ["00", "00", "00"]);
+//    $end = getTime(["2021", "12", ($j > 9) ? (string) $j : "0".$j], ["00", "00", "00"]);
+//    $candles = array_merge($candles, $bot->getCandlesFrom("ETH-BTC", $start, $end, 300));
+//}
 //file_put_contents("dataset.json", json_encode($candles));
-//var_dump($candles);
-$fund = 5000;
-
-for ($i = 0; $i < 30; $i++) {
-    $fund += $fund * 0.10;
-}
-
-echo round($fund, 2)."\n";

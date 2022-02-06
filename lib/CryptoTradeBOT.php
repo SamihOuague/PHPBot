@@ -5,18 +5,33 @@ class CryptoTradeBOT {
     protected $candles;
     protected $walletA;
     protected $walletB;
+    protected $lastFunds;
+    protected $wins;
+    protected $losses;
+    protected $available = true;
 
-    public function __construct() {
-        $this->setCandles(json_decode(file_get_contents("dataset.json")));
-        $this->walletA = new Wallet("ETH", "1.0");
+    public function __construct($funds, $dataset) {
+        $this->setCandles($dataset);
+        $this->walletA = new Wallet("ETH", $funds);
         $this->walletB = new Wallet("BTC", "0.00000");
+        $this->lastFunds = "1.0";
+        $this->wins = 0;
+        $this->losses = 0;
+    }
+
+    public function getWins() {
+        return $this->wins;
+    }
+
+    public function getLosses() {
+        return $this->losses;
     }
 
     public function getRSI($period, $pos) {
         $candles = $this->getCandles();
         $avgHarray = [];
         $avgBarray = [];
-        for ($i = $pos - $period; $i < $pos; $i++) {
+        for ($i = $pos + $period; $i > $pos; $i--) {
             $ystrD = (float) $candles[$i - 1][4];
             $crnt = (float) $candles[$i][4];
             $diff = $ystrD - $crnt;
@@ -38,8 +53,9 @@ class CryptoTradeBOT {
         $avgB = ($avgB / count($avgBarray));
         $avgH = ($avgH / count($avgHarray));
         $avgDiff = $avgH - $avgB;
-        $rsi = 100 - ((100/(1 + ($avgH/$avgB))));
-        
+        $rsi = 50;
+        if ($avgB != 0 && $avgH != 0)
+            $rsi = 100 - ((100/(1 + ($avgH/$avgB))));
         return $rsi;
     }
 
@@ -74,6 +90,8 @@ class CryptoTradeBOT {
     public function sell($price) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
+        $this->available = true;
+        $this->lastFunds = $walletA->getFunds();
         if ($walletA->getFunds() > 0)
             $this->setWalletB($walletA->sellAll($price, $walletB));
     }
@@ -83,22 +101,89 @@ class CryptoTradeBOT {
         $walletB = $this->getWalletB();
         if ($walletB->getFunds() > 0)
             $this->setWalletA($walletB->buyAll($price, $walletA));
+        if ($this->lastFunds < $walletA->getFunds()) {
+            echo "\033[32mWIN : +". ($walletA->getFunds() - $this->lastFunds)."\n\033[0m";
+            $this->wins++;
+        }
+        else {
+            echo "\033[31mLOSS : -". ($this->lastFunds - $walletA->getFunds())."\n\033[0m";
+            $this->losses++;
+        }
     }
 
-    public function simulateStrategie($period = 14) {
+    public function makeDecision($period = 14, $perteMax = 3.5, $gainMax = 5.9) {
         $candles = $this->getCandles();
-        for($i = ($period + 1); $i < count($candles); $i++) {
-            $rsi = $this->getRsi($period, $i);
-            if ($rsi > 70 && $this->getWalletA()->getFunds() != 0) {
-                $this->sell($candles[$i][4]);
-                echo "SELL => ". $this->getWalletB()->getFunds()."\n";
-                //usleep(5000 * 100);
-            } elseif ($rsi < 30 && $this->getWalletB()->getFunds() != 0) {
-                $this->buy($candles[$i][4]);
-                echo "BUY => ". $this->getWalletA()->getFunds()."\n";
-                //usleep(5000 * 100);
+        $buyIt = false;
+        $rsi = $this->getRsi($period, count($candles) - 1);
+        if ($this->getWalletB()->getFunds() != 0) {
+            $btcToETH = ($this->getWalletB()->getFunds() / $candles[count($candles) - 1][4]);
+            $decalage = $btcToETH - $this->lastFunds;
+            if ($decalage < 0) {
+                $decalage *= -1;
+                $perte = round(($decalage / $this->lastFunds) * 100, 2);
+                if ($perte > $perteMax) {
+                    $buyIt = true;
+                }
+            } elseif ($decalage > 0) {
+                $gain = round(($decalage / $this->lastFunds) * 100, 2);
+                if ($gain >= $gainMax) {
+                    $buyIt = true;
+                }
             }
         }
+        if ($rsi > 70) {
+            if ($this->getWalletA()->getFunds() != 0)
+                $this->sell($candles[count($candles) - 1][4]);
+        } elseif ($rsi < 30 || $buyIt) {
+            if ($this->getWalletB()->getFunds() != 0 && $this->available) {
+                $this->available = false;
+                $this->buy($candles[count($candles) - 1][4]);
+            }
+        }
+    }
+
+    public function simulateStrategy($period = 14, $perteMax = 3.5, $gainMax = 5.9) {
+        $candles = $this->getCandles();
+        for($i = count($candles) - ($period + 1); $i >= 0; $i--) {
+            $buyIt = false;
+            $rsi = $this->getRsi($period, $i);
+            //echo $rsi."\n";
+            if ($this->getWalletB()->getFunds() != 0) {
+                $btcToETH = ($this->getWalletB()->getFunds() / $candles[$i][4]);
+                $decalage = $btcToETH - $this->lastFunds;
+                if ($decalage < 0) {
+                    $decalage *= -1;
+                    $perte = round(($decalage / $this->lastFunds) * 100, 2);
+                    if ($perte > $perteMax) {
+                        $buyIt = true;
+                    }
+                } elseif ($decalage > 0) {
+                    $gain = round(($decalage / $this->lastFunds) * 100, 2);
+                    if ($gain >= $gainMax) {
+                        $buyIt = true;
+                    }
+                }
+            }
+            if ($rsi > 70 || $buyIt) {
+                if ($this->getWalletB()->getFunds() != 0 && $this->available) {
+                    //$this->sell($candles[$i][4]);
+                    $hour = (int) date("H", $candles[$i][0]);
+                    $date = date("Y-m-d H:i:s", $candles[$i][0]);
+                    if ($hour >= 0 && $hour <= 23) {
+                        echo $date." => ";
+                        $this->available = false;
+                        $this->buy($candles[$i][4]);
+                    }
+                }
+            } elseif ($rsi < 30) {
+                if ($this->getWalletA()->getFunds() != 0) {
+                    $this->sell($candles[$i][4]);
+                    //$this->available = false;
+                    //$this->buy($candles[$i][4]);
+                }
+            }
+        }
+        echo $date." => ";
         $this->buy($candles[count($candles) - 1][4]);
         return $this->getWalletA()->getFunds();
     }
