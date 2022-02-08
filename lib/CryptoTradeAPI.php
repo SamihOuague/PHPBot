@@ -24,7 +24,10 @@ class CryptoTradeAPI extends CoinbaseConnector {
     }
 
     public function getAccounts() {
-        return $this->createRequest("/accounts", "GET");
+        if (isset($this->accounts) && $this->accounts)
+            return $this->accounts;
+        else
+            return $this->createRequest("/accounts", "GET");
     }
 
     public function getCurrencies() {
@@ -72,6 +75,10 @@ class CryptoTradeAPI extends CoinbaseConnector {
 
     public function getWallets() {
         return $this->createRequest("/coinbase-accounts", "GET");
+    }
+
+    public function getFees() {
+        return $this->createRequest("/fees", "GET");
     }
 
     public function getCandles($idProd, $granu = "60") {

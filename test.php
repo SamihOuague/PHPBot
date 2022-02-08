@@ -1,43 +1,56 @@
 <?php
+require_once("./lib/CryptoTradeBOT.php");
 require_once("./lib/CryptoTradeAPI.php");
+require_once("./lib/Wallet.php");
 
-$bot = new CryptoTradeAPI();
-//$tradpair = $bot->getTradingPair();
-//$order = $bot->takeOrder("ETH-BTC", "0.95", "sell");
-
-//$accounts = $bot->getAccounts();
-//for ($i = 0; $i < count($accounts); $i++) {
-//    if ($accounts[$i]["currency"] == "ETH" || $accounts[$i]["currency"] == "BTC")
-//        var_dump($accounts[$i]);
-//}
-
-//$order = $bot->takeOrder("ETH-BTC", "0.6", "buy", "0.07");
-//$order = $bot->getOrder("e324dd1e-47f8-4f5d-83a7-b7b074a2cc2b");
-//function getTime($date, $hour) {
-//    $start = $date[0]."-".$date[1]."-".$date[2]."T".$hour[0].":".$hour[1].":".$hour[2];
-//    return $start;
-//}
+$api = new CryptoTradeAPI();
+$accounts = $api->getAccounts();
+foreach ($accounts as $key => $value) {
+    if ($value["currency"] == "BTC") {
+        var_dump($value["available"]);
+    } elseif ($value["currency"] == "ETH") {
+        $this->walletA->setFunds($value["available"]);
+    }
+}
+//$candles = $api->getCandlesFrom("ETH-BTC", $start, date("Y-m-d\TH:i:s", time()));
+//$bot = new CryptoTradeBOT("1.0", $candles);
 //
-//$start = getTime(["2022", "02", "04"], ["00", "00", "00"]);
-//$end = getTime(["2022", "02", "05"], ["00", "00", "00"]);
-
-//$candles = $bot->getCandlesFrom("ETH-BTC", $start, $end, 300);
-//$rsi = $bot->getRSI("ETH-BTC", "60", 14);
-//$candles = array_merge($candles, $bot->getCandlesFrom("ETH-BTC", $start, $end, 300));
+//$price = $api->ticker("ETH-BTC")["price"];
+//$low = $price;
+//$hight = $price;
+//$openPrice = $candles[0][3];
+//$lastPrice = "";
 //
-////var_dump($candles);
-//$fund = 1000;
-//
-//for ($i = 0; $i < 730; $i++) {
-//    $fund += $fund * 0.01;
+//while(true) {
+//    $tick = $api->ticker("ETH-BTC");
+//    if (isset($tick) && isset($tick["time"])) {
+//        $timestmp = ($candles[0][0] + 60) - strtotime($tick["time"]);
+//        if ($tick["price"] > $hight)
+//            $hight = $tick["price"];
+//        elseif ($tick["price"] < $low)
+//            $low = $tick["price"];
+//        if ($timestmp < 0) {
+//            array_unshift($candles, [
+//                ($candles[0][0] + 60),
+//                (float) $low,
+//                (float) $hight,
+//                (float) $openPrice,
+//                (float) $tick["price"],
+//            ]);
+//            $openPrice = $tick["price"];
+//            $bot->setCandles($candles);
+//            $bot->makeDecision($tick["price"]);
+//            echo "One minutes past\n";
+//            echo "ETH => ".$bot->getWalletA()->getFunds()."\n";
+//            echo "BTC => ".$bot->getWalletB()->getFunds()."\n";
+//            echo "RSI => ".$bot->getRSI(14, 0)."\n";
+//        } elseif ($tick["price"] != $lastPrice) {
+//            $lastPrice = $tick["price"];
+//            $bot->makeDecision($tick["price"]);
+//            echo "New price => ".$tick["price"]."\n";
+//        }
+//    } else {
+//        var_dump($tick);
+//    }
+//    sleep(1);
 //}
-//
-//echo round($fund, 2)."\n";
-//$candles = [];
-//for ($i = 1, $j = 2; $j < 31; $i++, $j++) {
-//    $day = ($i > 9) ? (string) $i : "0".$i;
-//    $start = getTime(["2021", "12", ($i > 9) ? (string) $i : "0".$i], ["00", "00", "00"]);
-//    $end = getTime(["2021", "12", ($j > 9) ? (string) $j : "0".$j], ["00", "00", "00"]);
-//    $candles = array_merge($candles, $bot->getCandlesFrom("ETH-BTC", $start, $end, 300));
-//}
-//file_put_contents("dataset.json", json_encode($candles));
