@@ -6,20 +6,15 @@ class CryptoTradeBOT_V2 {
     protected $candles;
     protected $walletA;
     protected $walletB;
-    protected $lastFunds;
-    protected $wins;
-    protected $losses;
-    protected $available = true;
     protected $api;
+    public $signal;
 
     public function __construct($walletA, $walletB, $dataset) {
-        $this->wins = 0;
-        $this->losses = 0;
         $this->setCandles($dataset);
         $this->setWalletA($walletA);
         $this->setWalletB($walletB);
-        $this->lastFunds = $walletA->getFunds();
         $this->api = new CryptoTradeAPI();
+        $this->signal = "none";
     }
 
     public function getWins() {
@@ -30,7 +25,7 @@ class CryptoTradeBOT_V2 {
         return $this->losses;
     }
 
-    public function getRSI($period, $pos) {
+    public function getRSI($period = 14, $pos = 0) {
         $candles = $this->getCandles();
         $avgHarray = [];
         $avgBarray = [];
@@ -92,82 +87,79 @@ class CryptoTradeBOT_V2 {
 
     public function sell($price) {
         $walletA = $this->getWalletA();
-        $walletB = $this->getWalletB();
         $api = $this->api;
-        $this->available = true;
-        $this->lastFunds = $walletA->getFunds();
-        if (round($walletA->getFunds(), 6) > 0) {
-            $order = $api->takeOrder("ETH-BTC", $walletA->getFunds(), "sell", $price);
-            $this->setWalletB($walletA->sellAll($price, $walletB));
+        if (round($walletA->getFunds(), 5) > 0) {
+            $order = $api->takeOrder("LTC-BTC", $walletA->getFunds(), "sell", $price);
+            if (isset($order["id"])) {
+                $orderBis = $api->getOrder($order["id"]);
+                while(isset($orderBis["status"]) && $orderBis["status"] != "done") {
+                    $orderBis = $api->getOrder($order["id"]);
+                    var_dump($orderBis);
+                    sleep(5);
+                }
+                if ($order && isset($orderBis["executed_value"])) {
+                    $walletA = $this->getWalletA();
+                    $walletB = $this->getWalletB();
+                    $walletA->setFunds(0);
+                    $walletB->setFunds($orderBis["executed_value"] - $orderBis["fill_fees"]);
+                    $this->setWalletA($walletA);
+                    $this->setWalletB($walletB);
+                }
+                return $orderBis;
+            } else {
+                return 0;
+            }
         }
+        return 0;
     }
 
     public function buy($price) {
-        $walletA = $this->getWalletA();
-        $walletB = $this->getWalletB();
         $api = $this->api;
-        if (round($walletB->getFunds(), 6) > 0) {
+        $walletB = $this->getWalletB();
+        if (round($walletB->getFunds(), 5) > 0) {
             $fees = $api->getFees()["maker_fee_rate"];
-            $btcprice = ($walletB->getFunds() / $price) - (($walletB->getFunds() / $price) * $fees);
-            $btctoetc = substr((string) $btcprice, 0, 8);
-            $order = $api->takeOrder("ETH-BTC", $btctoetc, "buy", $price);
-            $this->setWalletA($walletB->buyAll($price, $walletA));
+            $buySize = $price * $walletA->getFunds();
+            $fee = $buySize * 0.0035;
+            $fund = substr((string) ($buySize - $fee), 0, 8);
+            $order = $api->takeOrder("LTC-BTC", $fund, "buy", $price);
+            if (isset($order["id"])) {
+                $orderBis = $api->getOrder($order["id"]);
+                while(isset($orderBis["status"]) && $orderBis["status"] != "done") {
+                    $orderBis = $api->getOrder($order["id"]);
+                    var_dump($orderBis);
+                    sleep(5);
+                }
+                if ($order && isset($orderBis["filled_size"])) {
+                    $walletA = $this->getWalletA();
+                    $walletB = $this->getWalletB();
+                    $walletA->setFunds(0);
+                    $walletB->setFunds($orderBis["filled_size"]);
+                    $this->setWalletA($walletA);
+                    $this->setWalletB($walletB);
+                }
+                return $orderBis;
+            } else {
+                return 0;
+            }
         }
-        if ($this->lastFunds < $walletA->getFunds()) {
-            echo "\033[32mWIN : +". ($walletA->getFunds() - $this->lastFunds)."\n\033[0m";
-            $this->wins++;
-        }
-        else {
-            echo "\033[31mLOSS : -". ($this->lastFunds - $walletA->getFunds())."\n\033[0m";
-            $this->losses++;
-        }
+        return 0;
     }
 
-    public function makeDecision($currentPrice, $perteMax = 3.5, $gainMax = 5.9, $period = 14) {
-        $candles = $this->getCandles();
-        $buyIt = false;
-        $rsi = $this->getRsi($period, 0);
-        if (round($this->getWalletB()->getFunds(), 6) != 0) {
-            $btcToETH = ($this->getWalletB()->getFunds() / $currentPrice);
-            $decalage = $btcToETH - $this->lastFunds;
-            if ($decalage < 0) {
-                $decalage *= -1;
-                $perte = round(($decalage / $this->lastFunds) * 100, 2);
-                if ($perte > $perteMax) {
-                    $buyIt = true;
-                }
-            } elseif ($decalage > 0) {
-                $gain = round(($decalage / $this->lastFunds) * 100, 2);
-                if ($gain >= $gainMax) {
-                    $buyIt = true;
-                }
-            }
+    public function makeDecision($currentPrice, $perteMax = 3.5, $gainMax = 5.9) {
+        $walletA = $this->getWalletA();
+        $walletB = $this->getWalletB();
+        $rsi = $this->getRSI();
+        if ($rsi >= 70 && round($walletB->getFunds(), 5) > 0) {
+            $this->signal = "buy";
+        } elseif ($rsi <= 30 && round($walletA->getFunds(), 5) > 0) {
+            $this->signal = "sell";
         }
-        if ($rsi > 70 || $buyIt) {
-            if (round($this->getWalletB()->getFunds(), 6) != 0 && $this->available) {
-                $this->available = false;
-                $this->buy($currentPrice);
-            }
-        } elseif ($rsi < 60) {
-            if (round($this->getWalletA()->getFunds(), 6) != 0) {
-                $this->sell($currentPrice);
-            }
-        }
-    }
-    
-    public function refreshWallets() {
-        $accounts = $this->api->getAccounts();
-        $response = [];
-        foreach ($accounts as $key => $value) {
-            if ($value["currency"] == "BTC") {
-                $wallet = $this->getWalletB();
-                $wallet->setFunds($value["available"]);
-                $this->setWalletB($wallet);
-            } elseif ($value["currency"] == "ETH") {
-                $wallet = $this->getWalletA();
-                $wallet->setFunds($value["available"]);
-                $this->setWalletA($wallet);
-            }
+        if ($this->signal == "sell" && $rsi > 30) {
+            $this->signal = "none";
+            $this->sell($currentPrice);
+        } elseif ($this->signal == "buy" && $rsi < 70) {
+            $this->signal = "none";
+            $this->buy($currentPrice);
         }
     }
 }

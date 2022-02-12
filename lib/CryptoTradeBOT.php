@@ -93,7 +93,6 @@ class CryptoTradeBOT {
         $this->available = true;
         $this->lastFunds = $walletA->getFunds();
         if ($walletA->getFunds() > 0) {
-            echo "DEEZ NUTS\n";
             $this->setWalletB($walletA->sellAll($price, $walletB));
         }
     }
@@ -176,6 +175,7 @@ class CryptoTradeBOT {
                         echo $date." => ";
                         $this->available = false;
                         $this->buy($candles[$i][4]);
+                        usleep(5000 * 100);
                     }
                 }
             } elseif ($rsi < 30) {

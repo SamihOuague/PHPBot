@@ -10,7 +10,8 @@ class CryptoTradeAPI extends CoinbaseConnector {
     public function __construct() {
         parent::__construct(Config::getConfig()["passphrase"], 
                         Config::getConfig()["key"], 
-                        Config::getConfig()["secret"]);
+                        Config::getConfig()["secret"],
+                    );
         $this->setProfileId();
     }
 

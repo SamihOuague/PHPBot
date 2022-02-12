@@ -24,14 +24,14 @@ class Wallet {
         return $this->currency = $currency;
     }
 
-    public function sellAll($price, $wallet) {
-        $wallet->setFunds($this->funds * $price);
+    public function sellAll($funds, $wallet) {
+        $wallet->setFunds($funds);
         $this->setFunds(0);
         return $wallet;
     }
 
-    public function buyAll($price, $wallet) {
-        $wallet->setFunds($this->funds / $price);
+    public function buyAll($funds, $wallet) {
+        $wallet->setFunds($funds);
         $this->setFunds(0);
         return $wallet;
     }

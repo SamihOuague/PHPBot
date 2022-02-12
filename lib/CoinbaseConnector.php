@@ -21,7 +21,7 @@ class CoinbaseConnector {
         $sign = $timestamp. $method . $route. $b;
         $hashsign = base64_encode(hash_hmac("sha256", $sign, base64_decode($this->secret), true));
         try {
-            $response = $client->request($method, 'https://api-public.sandbox.exchange.coinbase.com'. $route, [
+            $response = $client->request($method, 'https://api.exchange.coinbase.com'. $route, [
                 'body' => $b,
                 'headers' => [
                     'Accept' => 'application/json',
