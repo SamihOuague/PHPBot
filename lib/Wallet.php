@@ -23,16 +23,4 @@ class Wallet {
     public function setCurrency($currency) {
         return $this->currency = $currency;
     }
-
-    public function sellAll($funds, $wallet) {
-        $wallet->setFunds($funds);
-        $this->setFunds(0);
-        return $wallet;
-    }
-
-    public function buyAll($funds, $wallet) {
-        $wallet->setFunds($funds);
-        $this->setFunds(0);
-        return $wallet;
-    }
 }

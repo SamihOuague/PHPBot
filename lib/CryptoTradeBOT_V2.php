@@ -29,8 +29,8 @@ class CryptoTradeBOT_V2 {
         $candles = $this->getCandles();
         $avgHarray = [];
         $avgBarray = [];
-        for ($i = $pos + $period; $i > $pos; $i--) {
-            $ystrD = (float) $candles[$i - 1][4];
+        for ($i = $pos + $period; $i >= $pos; $i--) {
+            $ystrD = (float) $candles[$i + 1][4];
             $crnt = (float) $candles[$i][4];
             $diff = $ystrD - $crnt;
             if ($diff < 0) {
@@ -116,12 +116,14 @@ class CryptoTradeBOT_V2 {
     public function buy($price) {
         $api = $this->api;
         $walletB = $this->getWalletB();
+        $walletA = $this->getWalletA();
         if (round($walletB->getFunds(), 5) > 0) {
             $fees = $api->getFees()["maker_fee_rate"];
-            $buySize = $price * $walletA->getFunds();
-            $fee = $buySize * 0.0035;
+            $buySize = $price * $walletB->getFunds();
+            $fee = $buySize * $fees;
             $fund = substr((string) ($buySize - $fee), 0, 8);
             $order = $api->takeOrder("LTC-BTC", $fund, "buy", $price);
+            var_dump($order);
             if (isset($order["id"])) {
                 $orderBis = $api->getOrder($order["id"]);
                 while(isset($orderBis["status"]) && $orderBis["status"] != "done") {
