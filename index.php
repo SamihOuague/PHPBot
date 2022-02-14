@@ -24,8 +24,11 @@ $lastFunds = 0;
 //var_dump($walletA->getFunds());
 while (true) {
     $tick = $api->ticker("LTC-BTC");
-    $candles = $api->getCandlesFrom("LTC-BTC", $start, date("Y-m-d\TH:i:s", time()), 900);
-    $bot->setCandles($candles);
+    $start = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 6)));
+    if ((time() - $candles[0][0]) > 900) {
+        $candles = $api->getCandlesFrom("LTC-BTC", $start, date("Y-m-d\TH:i:s", time()), 900);
+        $bot->setCandles($candles);
+    }
     system("clear");
     echo "Signal => ". $bot->signal ."\n";
     if (round($bot->getWalletB()->getFunds(), 5) > 0) {
@@ -40,5 +43,5 @@ while (true) {
     echo "LTC => ". round($bot->getWalletA()->getFunds(), 5) ."\n";
     echo "price => ". $tick["price"]."\n";
     echo "RSI => ". $bot->getRSI()."\n";
-    sleep(300);
+    sleep(60);
 }

@@ -151,9 +151,9 @@ class CryptoTradeBOT_V2 {
     }
 
     public function isEngulfing($candles, $pos) {
-        $top1 = ($candles[$pos - 1][4] > $candles[$pos - 1][3]) ? $candles[$pos - 1][4] : $candles[$pos - 1][3];
+        $top1 = ($candles[$pos + 1][4] > $candles[$pos + 1][3]) ? $candles[$pos + 1][4] : $candles[$pos + 1][3];
         $top2 = ($candles[$pos][4] > $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
-        $down1 = ($candles[$pos - 1][4] < $candles[$pos - 1][3]) ? $candles[$pos - 1][4] : $candles[$pos - 1][3];
+        $down1 = ($candles[$pos + 1][4] < $candles[$pos + 1][3]) ? $candles[$pos + 1][4] : $candles[$pos + 1][3];
         $down2 = ($candles[$pos][4] < $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
         if ($top1 < $top2 && $down1 < $down2) {
             //var_dump(date("Y-m-d H:i:s", $candles[$pos][0]));
@@ -185,10 +185,11 @@ class CryptoTradeBOT_V2 {
     public function makeDecision($currentPrice, $perteMax = 3.5, $gainMax = 5.9) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
+        $candles = $this->getCandles();
         $rsi = $this->getRSI();
-        if ($rsi >= 70 && isEngulfing($candles, $lastPos)) {
+        if ($rsi >= 70 && $this->isEngulfing($candles, $lastPos)) {
             $this->signal = "sell";
-        } elseif ($rsi <= 30 && isHammer($candles[$lastPos])) {
+        } elseif ($rsi <= 30 && $this->isHammer($candles[$lastPos])) {
             $this->signal = "buy";
         }
 

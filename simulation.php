@@ -70,11 +70,11 @@ function isHanged($candle) {
 }
 
 function isEngulfing($candles, $pos) {
-    $top1 = ($candles[$pos - 1][4] > $candles[$pos - 1][3]) ? $candles[$pos - 1][4] : $candles[$pos - 1][3];
-    $top2 = ($candles[$pos][4] > $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
-    $down1 = ($candles[$pos - 1][4] < $candles[$pos - 1][3]) ? $candles[$pos - 1][4] : $candles[$pos - 1][3];
-    $down2 = ($candles[$pos][4] < $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
-    if ($top1 < $top2 && $down1 < $down2) {
+    $top2 = ($candles[$pos + 1][4] > $candles[$pos + 1][3]) ? $candles[$pos + 1][4] : $candles[$pos + 1][3];
+    $top = ($candles[$pos][4] > $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
+    $down2 = ($candles[$pos + 1][4] < $candles[$pos + 1][3]) ? $candles[$pos + 1][4] : $candles[$pos + 1][3];
+    $down = ($candles[$pos][4] < $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
+    if ($top2 > $top && $down2 > $down) {
         //var_dump(date("Y-m-d H:i:s", $candles[$pos][0]));
         return true;
     } else {
@@ -160,11 +160,9 @@ while ($lastPos >= 0) {
         $walletA->setFunds($nFunds - $fees);
         $walletB->setFunds(0);
         if ($walletA->getFunds() > $lastFundsLTC) {
-            echo "\e[35m". date("Y-m-d H:i:s", $candles[$lastPos][0])."\n";
             echo "\e[32mWIN => ". ($walletA->getFunds() - $lastFundsLTC) ."\n";
             $wins++;
         } else {
-            echo "\e[35m". date("Y-m-d H:i:s", $candles[$lastPos][0])."\n";
             echo "\e[31mLOSS => ". ($walletA->getFunds() - $lastFundsLTC) ."\n";
             $losses++;
         }
@@ -179,4 +177,6 @@ if (round($walletA->getFunds(), 5) == 0) {
 
 echo "\e[39mLTC => ". $walletA->getFunds()."\n";
 echo "BTC => ". $walletB->getFunds()."\n";
+echo "TRADE GAGNANT => ". $wins."\n";
+echo "TRADE PERDANT => ". $losses."\n";
 echo "\e[34mTAUX DE REUSSITES : ". round(($wins / ($losses + $wins)) * 100, 2) ."%\n";
