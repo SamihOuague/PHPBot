@@ -19,6 +19,7 @@ foreach ($accounts as $key => $value) {
 
 $bot = new CryptoTradeBOT_V2($walletA, $walletB, $candles);
 $lastFunds = 0;
+//var_dump($walletB->getFunds());
 //var_dump($bot->buy($api->ticker("LTC-BTC")["price"]));
 //var_dump($walletA->getFunds());
 while (true) {
