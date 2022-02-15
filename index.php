@@ -1,47 +1,49 @@
 <?php
-require_once("./lib/CryptoTradeBOT_V2.php");
-require_once("./lib/CryptoTradeAPI.php");
-require_once("./lib/Wallet.php");
+require_once("lib/Binance/BinanceTradeAPI.php");
+require_once("lib/CryptoTradeBOT_V3.php");
+require_once("lib/Wallet.php");
 
-$api = new CryptoTradeAPI();
-$start = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 6)));
-$candles = $api->getCandlesFrom("LTC-BTC", $start, date("Y-m-d\TH:i:s", time()), 900);
+$api = new BinanceTradeAPI();
 $accounts = $api->getAccounts();
+
 $walletA;
 $walletB;
-foreach ($accounts as $key => $value) {
-    if ($value["currency"] == "BTC") {
-        $walletB = new Wallet("BTC", $value["available"]);
-    } elseif ($value["currency"] == "LTC") {
-        $walletA = new Wallet("LTC", $value["available"]);
+for ($i = 0; $i < count($accounts); $i++) {
+    if ($accounts["balances"][$i]["asset"] == "BNB") {
+        $walletB = new Wallet("BNB", $accounts["balances"][$i]["free"]);
+    } elseif ($accounts["balances"][$i]["asset"] == "LTC") {
+        $walletA = new Wallet("LTC", $accounts["balances"][$i]["free"]);
     }
 }
 
-$bot = new CryptoTradeBOT_V2($walletA, $walletB, $candles);
-$lastFunds = 0;
-//var_dump($walletB->getFunds());
-//var_dump($bot->buy($api->ticker("LTC-BTC")["price"]));
+$candles = array_reverse($api->getCandles("LTCBNB", "15m"));
+if (isset($walletA) && isset($walletB)) {
+    $bot = new CryptoTradeBOT_V3($walletA, $walletB, $candles);
+}
+//var_dump(date("Y-m-d H:i:s", $bot->getCandles()[0][0]/1000));
+
 //var_dump($walletA->getFunds());
+
 while (true) {
-    $tick = $api->ticker("LTC-BTC");
-    $start = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 6)));
-    if ((time() - $candles[0][0]) > 900) {
-        $candles = $api->getCandlesFrom("LTC-BTC", $start, date("Y-m-d\TH:i:s", time()), 900);
+    $tick = $api->ticker("LTCBNB");
+    if ((time() - ($candles[0][0] / 1000)) > 900) {
+        $candles = array_reverse($api->getCandles("LTCBNB", "15m"));
         $bot->setCandles($candles);
     }
     system("clear");
     echo "Signal => ". $bot->signal ."\n";
     if (round($bot->getWalletB()->getFunds(), 5) > 0) {
         $ltc = round($bot->getWalletB()->getFunds() / $tick["price"], 5);
-        echo "LTC potentiel => ". ($ltc - ($ltc * 0.0035)) ."\n";
+        echo "LTC potentiel => ". ($ltc - ($ltc * 0.0005)) ."\n";
     } elseif (round($bot->getWalletA()->getFunds(), 5) > 0) {
-        $btc = round($bot->getWalletA()->getFunds() * $tick["price"], 5);
-        echo "BTC potentiel => ". ($btc - ($btc * 0.0035)) ."\n";
+        $bnb = round($bot->getWalletA()->getFunds() * $tick["price"], 5);
+        echo "BNB potentiel => ". ($bnb - ($bnb * 0.0005)) ."\n";
     }
     $bot->makeDecision($tick["price"]);
-    echo "BTC => ". round($bot->getWalletB()->getFunds(), 5) ."\n";
+    echo "BNB => ". round($bot->getWalletB()->getFunds(), 5) ."\n";
     echo "LTC => ". round($bot->getWalletA()->getFunds(), 5) ."\n";
     echo "price => ". $tick["price"]."\n";
     echo "RSI => ". $bot->getRSI()."\n";
+    echo "LAST CANDLE => ". date("Y-m-d H:i:s", ($candles[0][0] / 1000));
     sleep(60);
 }
