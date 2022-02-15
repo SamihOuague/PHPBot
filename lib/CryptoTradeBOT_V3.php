@@ -79,7 +79,7 @@ class CryptoTradeBOT_V3 {
         return $this->walletB = $wallet;
     }
 
-    public function sell($price) {
+    public function sell($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $order = $this->api->createOrder("LTCBNB", "sell", substr($walletA->getFunds(), 0, 5), $price);
@@ -87,17 +87,26 @@ class CryptoTradeBOT_V3 {
             $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
                 $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
-                var_dump($orderBis);
+                system("clear");
+                if (!isset($orderBis) || !isset($orderBis["status"]))
+                    return 0;
+                echo "ORDER BUY STATUS => ". $orderBis["status"] ."...\n";
                 if ($orderBis["status"] == "CANCELED")
                     return 0;
                 sleep(5);
             }
+            $size = $walletA->getFunds() * $price;
+            $fees = $size * $fee;
+            $walletB->setFunds($size - $fees);
+            $walletA->setFunds(0);
+            $this->setWalletA($walletA);
+            $this->setWalletB($walletB);
             return $orderBis;
         }
         return 0;
     }
 
-    public function buy($price) {
+    public function buy($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $order = $this->api->createOrder("LTCBNB", "buy", substr($walletB->getFunds()  / $price, 0, 5), $price);
@@ -106,11 +115,18 @@ class CryptoTradeBOT_V3 {
             $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
                 $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
-                var_dump($orderBis);
+                system("clear");
+                if (!isset($orderBis) || !isset($orderBis["status"]))
+                    return 0;
+                echo "ORDER BUY STATUS => ". $orderBis["status"] ."...\n";
+                if ($orderBis["status"] == "CANCELED")
+                    return 0;
                 sleep(5);
             }
+            $size = $walletB->getFunds() / $price;
+            $fees = $size * $fee;
+            $walletA->setFunds($size - $fees);
             $walletB->setFunds(0);
-            $walletA->setFunds(0);
             $this->setWalletA($walletA);
             $this->setWalletB($walletB);
             return $orderBis;
