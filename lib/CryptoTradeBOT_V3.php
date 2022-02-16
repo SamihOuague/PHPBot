@@ -19,7 +19,7 @@ class CryptoTradeBOT_V3 {
         $this->lastFunds = $walletA->getFunds();
     }
 
-    public function getRSI($period = 14, $pos = 0) {
+    public function getRSI($period = 15, $pos = 0) {
         $candles = $this->getCandles();
         $avgHarray = [];
         $avgBarray = [];
@@ -45,9 +45,10 @@ class CryptoTradeBOT_V3 {
         $avgB = ($avgB / count($avgBarray));
         $avgH = ($avgH / count($avgHarray));
         $avgDiff = $avgH - $avgB;
-        $rsi = 50;
         if ($avgB != 0 && $avgH != 0)
             $rsi = 100 - ((100/(1 + ($avgH/$avgB))));
+        else
+            $rsi = 100 - (100/1);
         return $rsi;
     }
 
@@ -133,15 +134,16 @@ class CryptoTradeBOT_V3 {
         return 0;
     }
 
-    public function upOrDown($candles, $pos) {
-        if ($candles[$pos][3] > $candles[$pos + 1][3] && $candles[$pos + 1][3] > $candles[$pos + 2][3]) {
+    public function upOrDown($pos) {
+        if ($this->getRSI(15, $pos) > $this->getRSI(15, $pos + 1) && $this->getRSI(15, $pos + 1) > $this->getRSI(15, $pos + 2)) {
             return "UP";
-        } elseif ($candles[$pos][3] < $candles[$pos + 1][3] && $candles[$pos + 1][3] < $candles[$pos + 2][3]) {
+        } elseif ($this->getRSI(15, $pos) < $this->getRSI(15, $pos + 1) && $this->getRSI(15, $pos + 1) < $this->getRSI(15, $pos + 2)) {
             return "DOWN";
         } else {
             return false;
         }
     }
+
 
     public function isHammer($candle) {
         if ($candle[4] > $candle[3]) {
