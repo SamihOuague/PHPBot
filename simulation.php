@@ -94,7 +94,7 @@ while ($lastPos >= 0) {
         $ltcPot = $walletB->getFunds() / $price;
         $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
         $ratio = (($diff / $lastFunds) * 100);
-        if ($ratio < -1.9 || $ratio > 1) {
+        if ($ratio < -2 || $ratio > 1) {
             $position = "buy";
         }
     }

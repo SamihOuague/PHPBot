@@ -166,9 +166,9 @@ class CryptoTradeBOT_V3 {
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI();
         $lastFunds = $this->lastFunds;
-        if ($rsi >= 70 && $this->isHammer($this->getCandles()[0])) {
+        if ($rsi >= 72 && $this->isHammer($this->getCandles()[0])) {
             $this->signal = "sell";
-        } elseif ($rsi <= 30 && $this->isHammer($this->getCandles()[0])) {
+        } elseif ($rsi <= 28 && $this->isHammer($this->getCandles()[0])) {
             $this->signal = "buy";
         }
         
@@ -176,7 +176,7 @@ class CryptoTradeBOT_V3 {
             $ltcPot = $walletB->getFunds() / $currentPrice;
             $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
             $ratio = (($diff / $lastFunds) * 100);
-            if ($ratio < -2 || $ratio > 0.6) {
+            if ($ratio < -2 || $ratio > 1) {
                 $this->signal = "buy";
             }
         }
