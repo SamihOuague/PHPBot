@@ -36,14 +36,14 @@ while (true) {
         }
         system("clear");
         echo "Signal => ". $bot->signal ."\n";
-        if (round($bot->getWalletB()->getFunds(), 5) > 0) {
+        if (round($bot->getWalletB()->getFunds(), 2) > 0) {
             $ltc = round($bot->getWalletB()->getFunds() / $tick["price"], 5);
             echo "LTC potentiel => ". ($ltc - ($ltc * 0.00075)) ."\n";
-        } elseif (round($bot->getWalletA()->getFunds(), 5) > 0) {
+        } elseif (round($bot->getWalletA()->getFunds(), 2) > 0) {
             $bnb = round($bot->getWalletA()->getFunds() * $tick["price"], 5);
             echo "BNB potentiel => ". ($bnb - ($bnb * 0.00075)) ."\n";
         }
-        $bot->makeDecision($tick["price"]);
+        $bot->makeDecision($api->ticker("LTCBNB"));
         echo "BNB => ". round($bot->getWalletB()->getFunds(), 5) ."\n";
         echo "LTC => ". round($bot->getWalletA()->getFunds(), 5) ."\n";
         echo "price => ". $tick["price"]."\n";

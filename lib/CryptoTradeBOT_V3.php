@@ -176,7 +176,7 @@ class CryptoTradeBOT_V3 {
             $ltcPot = $walletB->getFunds() / $currentPrice;
             $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
             $ratio = (($diff / $lastFunds) * 100);
-            if ($ratio < -1.5 || $ratio > 0.39) {
+            if ($ratio < -2 || $ratio > 0.6) {
                 $this->signal = "buy";
             }
         }
