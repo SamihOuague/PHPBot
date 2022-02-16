@@ -110,7 +110,6 @@ class CryptoTradeBOT_V3 {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $order = $this->api->createOrder("LTCBNB", "buy", substr($walletB->getFunds()  / $price, 0, 5), $price);
-        var_dump($order);
         if (isset($order["orderId"])) {
             $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
@@ -135,10 +134,11 @@ class CryptoTradeBOT_V3 {
     }
     
 
-    public function makeDecision($currentPrice, $perteMax = -3, $gainMax = 3) {
+    public function makeDecision($currentPrice) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI();
+        $lastFunds = $this->lastFunds;
         if ($rsi >= 70) {
             $this->signal = "sell";
         } elseif ($rsi <= 30) {
@@ -146,7 +146,7 @@ class CryptoTradeBOT_V3 {
         }
 
         if (round($walletB->getFunds(), 2) > 0 && $lastFunds != 0) {
-            $ltcPot = $walletB->getFunds() / $candles[$lastPos][3];
+            $ltcPot = $walletB->getFunds() / $currentPrice;
             $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
             $ratio = (($diff / $lastFunds) * 100);
             if ($ratio < -1.5 || $ratio > 0.3) {
@@ -156,6 +156,7 @@ class CryptoTradeBOT_V3 {
 
         if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05) {
             $this->signal = "none";
+            $this->lastFunds = $walletA->getFunds();
             $this->sell($currentPrice);
         } elseif ($this->signal == "buy" && round($walletB->getFunds(), 2) > 0.05) {
             $this->signal = "none";
