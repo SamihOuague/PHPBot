@@ -43,7 +43,7 @@ while (true) {
             $bnb = round($bot->getWalletA()->getFunds() * $tick["price"], 5);
             echo "BNB potentiel => ". ($bnb - ($bnb * 0.00075)) ."\n";
         }
-        $bot->makeDecision($api->ticker("LTCBNB"));
+        $bot->makeDecision($api->ticker("LTCBNB")["price"]);
         echo "BNB => ". round($bot->getWalletB()->getFunds(), 5) ."\n";
         echo "LTC => ". round($bot->getWalletA()->getFunds(), 5) ."\n";
         echo "price => ". $tick["price"]."\n";
