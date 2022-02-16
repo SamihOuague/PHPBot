@@ -177,11 +177,11 @@ class CryptoTradeBOT_V3 {
             $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
             $ratio = (($diff / $lastFunds) * 100);
             if ($ratio < -1.5 || $ratio > 0.39) {
-                $position = "buy";
+                $this->signal = "buy";
             }
         }
 
-        if (($position == "buy" && $this->upOrDown($this->getCandles(), 0) == "UP") || ($position == "sell" && $this->upOrDown($this->getCandles(), 0) == "DOWN")) {
+        if (($this->signal == "buy" && $this->upOrDown($this->getCandles(), 0) == "UP") || ($this->signal == "sell" && $this->upOrDown($this->getCandles(), 0) == "DOWN")) {
             if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05) {
                 $this->signal = "none";
                 $this->lastFunds = $walletA->getFunds();
