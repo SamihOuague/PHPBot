@@ -52,32 +52,11 @@ function isHammer($candle) {
     return false;
 }
 
-function isHanged($candle) {
-    if ($candle[4] > $candle[3]) {
-        $diffCand = $candle[4] - $candle[3];
-        $diffAvg = $candle[3] - $candle[1];
-        if ($diffAvg / $diffCand > 1)
-            return true;
-    } else {
-        $diffCand = $candle[3] - $candle[4];
-        $diffAvg = $candle[4] - $candle[1];
-        $ratio = 0;
-        if ($diffCand != 0 && $diffAvg != 0)
-            $ratio = $diffAvg / $diffCand;
-        if ($ratio > 3)
-            return true;
-    }
-    return false;
-}
-
-function isEngulfing($candles, $pos) {
-    $top2 = ($candles[$pos + 1][4] > $candles[$pos + 1][3]) ? $candles[$pos + 1][4] : $candles[$pos + 1][3];
-    $top = ($candles[$pos][4] > $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
-    $down2 = ($candles[$pos + 1][4] < $candles[$pos + 1][3]) ? $candles[$pos + 1][4] : $candles[$pos + 1][3];
-    $down = ($candles[$pos][4] < $candles[$pos][3]) ? $candles[$pos][4] : $candles[$pos][3];
-    if ($top2 > $top && $down2 > $down) {
-        //var_dump(date("Y-m-d H:i:s", $candles[$pos][0]));
-        return true;
+function upOrDown($candles, $pos) {
+    if ($candles[$pos][3] > $candles[$pos + 1][3] && $candles[$pos + 1][3] > $candles[$pos + 2][3]) {
+        return "UP";
+    } elseif ($candles[$pos][3] < $candles[$pos + 1][3] && $candles[$pos + 1][3] < $candles[$pos + 2][3]) {
+        return "DOWN";
     } else {
         return false;
     }
@@ -93,34 +72,37 @@ $walletB = new Wallet("BNB", 0);
 $position = "none";
 
 $lastPos = count($candles) - 16;
+
 $wins = 0;
 $losses = 0;
 $lastRsi;
 $lastFunds = $walletA->getFunds();
 while ($lastPos >= 0) {
     $rsi = getRSI($candles, $lastPos);
+    $h = (int) date("H", $candles[$lastPos][0]/1000);
+    $price = $candles[$lastPos][3];
     if (isset($lastRsi)) {
         $rsiTrend = ($rsi - $lastRsi) > 0;
         if ($rsi <= 30 && isHammer($candles[$lastPos])) {
             $position = "buy";
-        } elseif ($rsi >= 70) {
+        } elseif ($rsi >= 70 && isHammer($candles[$lastPos])) {
             $position = "sell";
         }
     }
 
     if (round($walletB->getFunds(), 5) > 0 && $lastFunds != 0) {
-        $ltcPot = $walletB->getFunds() / $candles[$lastPos][3];
+        $ltcPot = $walletB->getFunds() / $price;
         $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
         $ratio = (($diff / $lastFunds) * 100);
-        if ($ratio < -1.5 || $ratio > 0.39) {
+        if ($ratio < -1.5 || $ratio > 0.35) {
             $position = "buy";
         }
     }
-
-    if ($rsi < 70 && $rsi > 30) {
+    
+    if (($position == "buy" && upOrDown($candles, $lastPos) == "UP") || ($position == "sell" && upOrDown($candles, $lastPos) == "DOWN")) {
         if ($position == "sell" && round($walletA->getFunds(), 5) > 0) {
             $position = "none";
-            $nFunds = $walletA->getFunds() * $candles[$lastPos][3];
+            $nFunds = $walletA->getFunds() * $price;
             $fees = $nFunds * 0.00075;
             $lastFunds = $walletA->getFunds();
             $walletB->setFunds($nFunds - $fees);
@@ -129,7 +111,7 @@ while ($lastPos >= 0) {
             //usleep(50000);
         } elseif ($position == "buy" && round($walletB->getFunds(), 5) > 0) {
             $position = "none";
-            $nFunds = $walletB->getFunds() / $candles[$lastPos][3];
+            $nFunds = $walletB->getFunds() / $price;
             $fees = $nFunds * 0.00075;
             $lastFundsBTC = $walletB->getFunds();
             $walletA->setFunds($nFunds - $fees);

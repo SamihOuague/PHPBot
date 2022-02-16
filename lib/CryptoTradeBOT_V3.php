@@ -132,35 +132,64 @@ class CryptoTradeBOT_V3 {
         }
         return 0;
     }
-    
+
+    public function upOrDown($candles, $pos) {
+        if ($candles[$pos][3] > $candles[$pos + 1][3] && $candles[$pos + 1][3] > $candles[$pos + 2][3]) {
+            return "UP";
+        } elseif ($candles[$pos][3] < $candles[$pos + 1][3] && $candles[$pos + 1][3] < $candles[$pos + 2][3]) {
+            return "DOWN";
+        } else {
+            return false;
+        }
+    }
+
+    public function isHammer($candle) {
+        if ($candle[4] > $candle[3]) {
+            $diffCand = $candle[4] - $candle[3];
+            $diffAvg = $candle[2] - $candle[4];
+            if ($diffAvg / $diffCand > 1)
+                return true;
+        } else {
+            $diffCand = $candle[3] - $candle[4];
+            $diffAvg = $candle[2] - $candle[3];
+            $ratio = 0;
+            if ($diffCand != 0 && $diffAvg != 0)
+                $ratio = $diffAvg / $diffCand;
+            if ($ratio > 1)
+                return true;
+        }
+        return false;
+    }
 
     public function makeDecision($currentPrice) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI();
         $lastFunds = $this->lastFunds;
-        if ($rsi >= 70) {
+        if ($rsi >= 70 && $this->isHammer($this->getCandles()[0])) {
             $this->signal = "sell";
-        } elseif ($rsi <= 30) {
+        } elseif ($rsi <= 30 && $this->isHammer($this->getCandles()[0])) {
             $this->signal = "buy";
         }
-
+        
         if (round($walletB->getFunds(), 2) > 0 && $lastFunds != 0) {
             $ltcPot = $walletB->getFunds() / $currentPrice;
             $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
             $ratio = (($diff / $lastFunds) * 100);
-            if ($ratio < -1.5 || $ratio > 0.3) {
+            if ($ratio < -1.5 || $ratio > 0.39) {
                 $position = "buy";
             }
         }
 
-        if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05) {
-            $this->signal = "none";
-            $this->lastFunds = $walletA->getFunds();
-            $this->sell($currentPrice);
-        } elseif ($this->signal == "buy" && round($walletB->getFunds(), 2) > 0.05) {
-            $this->signal = "none";
-            $this->buy($currentPrice);
+        if (($position == "buy" && $this->upOrDown($this->getCandles(), 0) == "UP") || ($position == "sell" && $this->upOrDown($this->getCandles(), 0) == "DOWN")) {
+            if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05) {
+                $this->signal = "none";
+                $this->lastFunds = $walletA->getFunds();
+                $this->sell($currentPrice);
+            } elseif ($this->signal == "buy" && round($walletB->getFunds(), 2) > 0.05) {
+                $this->signal = "none";
+                $this->buy($currentPrice);
+            }
         }
     }
 }
