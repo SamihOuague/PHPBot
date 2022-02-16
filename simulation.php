@@ -112,7 +112,7 @@ while ($lastPos >= 0) {
         $ltcPot = $walletB->getFunds() / $candles[$lastPos][3];
         $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
         $ratio = (($diff / $lastFunds) * 100);
-        if ($ratio < -1.5 || $ratio > 0.3) {
+        if ($ratio < -1.5 || $ratio > 0.39) {
             $position = "buy";
         }
     }
