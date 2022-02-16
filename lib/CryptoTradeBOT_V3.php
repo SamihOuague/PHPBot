@@ -166,11 +166,11 @@ class CryptoTradeBOT_V3 {
     public function makeDecision($currentPrice) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $rsi = $this->getRSI();
+        $rsi = $this->getRSI(15, 1);
         $lastFunds = $this->lastFunds;
-        if ($rsi >= 72 && $this->isHammer($this->getCandles()[0])) {
+        if ($rsi >= 72.5 && $this->isHammer($this->getCandles()[1])) {
             $this->signal = "sell";
-        } elseif ($rsi <= 28 && $this->isHammer($this->getCandles()[0])) {
+        } elseif ($rsi <= 27.5 && $this->isHammer($this->getCandles()[1])) {
             $this->signal = "buy";
         }
         

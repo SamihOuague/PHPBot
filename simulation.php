@@ -72,7 +72,7 @@ $walletB = new Wallet("BNB", 0);
 
 $position = "none";
 
-$lastPos = count($candles) - 17;
+$lastPos = count($candles) - 18;
 
 $wins = 0;
 $losses = 0;
@@ -80,13 +80,13 @@ $lastRsi;
 $lastFunds = $walletA->getFunds();
 $lastFundsBTC = $walletA->getFunds();
 while ($lastPos >= 0) {
-    $rsi = getRSI($candles, $lastPos);
+    $rsi = getRSI($candles, $lastPos + 1);
     $h = (int) date("H", $candles[$lastPos][0]/1000);
     $price = $candles[$lastPos][3];
     
-    if ($rsi <= 28 && isHammer($candles[$lastPos])) {
+    if ($rsi <= 27.5 && isHammer($candles[$lastPos + 1])) {
         $position = "buy";
-    } elseif ($rsi >= 72 && isHammer($candles[$lastPos])) {
+    } elseif ($rsi >= 72.5 && isHammer($candles[$lastPos + 1])) {
         $position = "sell";
     }
 
