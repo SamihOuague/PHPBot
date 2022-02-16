@@ -12,11 +12,16 @@ class BinanceTradeAPI extends BinanceConnector {
         return $this->createRequest("/api/v3/account");
     }
 
-    public function getCandles($symbol, $interval="15m") {
-        return $this->createSimpleRequest("/api/v3/klines", [
+    public function getCandles($symbol, $interval="15m", $start="", $end="") {
+        $params = [
             "symbol" => $symbol,
             "interval" => $interval,
-        ]);
+            
+        ];
+        if ($start != "") {
+            $params["startTime"] = $start;
+        }
+        return $this->createSimpleRequest("/api/v3/klines", $params);
     }
 
     public function getOrder($symbol, $orderId) {

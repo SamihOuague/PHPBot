@@ -1,6 +1,7 @@
 <?php
-require_once("./lib/Coinbase/CryptoTradeAPI.php");
-require_once("./lib/Wallet.php");
+require_once("lib/Binance/BinanceTradeAPI.php");
+require_once("lib/Wallet.php");
+
 function getRSI($candles, $pos = 0) {
     $avgHarray = [];
     $avgBarray = [];
@@ -27,7 +28,7 @@ function getRSI($candles, $pos = 0) {
     $avgB = ($avgB / count($avgBarray));
     $avgH = ($avgH / count($avgHarray));
     $avgDiff = $avgH - $avgB;
-    $rsi = 50;
+    $rsi = 0;
     if ($avgB != 0 && $avgH != 0)
         $rsi = 100 - ((100/(1 + ($avgH/$avgB))));
     return $rsi;
@@ -82,93 +83,69 @@ function isEngulfing($candles, $pos) {
     }
 }
 
-
-
-
-$api = new CryptoTradeAPI();
-$start = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 72)));
-$candles = $api->getCandlesFrom("LTC-BTC", $start, date("Y-m-d\TH:i:s", time()), 900);
-$start2 = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 144)));
-$candles = array_merge($candles, $api->getCandlesFrom("LTC-BTC", $start2, $start, 900));
-$start3 = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 216)));
-$candles = array_merge($candles, $api->getCandlesFrom("LTC-BTC", $start3, $start2, 900));
-$start4 = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 288)));
-$candles = array_merge($candles, $api->getCandlesFrom("LTC-BTC", $start4, $start3, 900));
-$start5 = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 360)));
-$candles = array_merge($candles, $api->getCandlesFrom("LTC-BTC", $start5, $start4, 900));
-$start6 = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 432)));
-$candles = array_merge($candles, $api->getCandlesFrom("LTC-BTC", $start6, $start5, 900));
-$start7 = date("Y-m-d\TH:i:s", (time() - (60 * 60 * 504)));
-$candles = array_merge($candles, $api->getCandlesFrom("LTC-BTC", $start7, $start6, 900));
-
+$api = new BinanceTradeAPI();
+$candles = json_decode(file_get_contents("dataset.json"));
 
 $walletA = new Wallet("LTC", 1);
-$walletB = new Wallet("BTC", 0);
+$walletB = new Wallet("BNB", 0);
 
 
 $position = "none";
 
 $lastPos = count($candles) - 16;
-$lastFundsLTC = $walletA->getFunds();
-$lastFundsBTC = $walletA->getFunds() * $candles[$lastPos][3];
 $wins = 0;
 $losses = 0;
+$lastRsi;
+$lastFunds = $walletA->getFunds();
 while ($lastPos >= 0) {
     $rsi = getRSI($candles, $lastPos);
-    //echo "RSI => ". $rsi ."\n";
-    //echo "PRICE ENTER => ". $candles[$lastPos][3] ."\n\n";
-    if ($rsi <= 30 && isHammer($candles[$lastPos])) {
-        $position = "buy";
-    } elseif ($rsi >= 70 && isEngulfing($candles, $lastPos)) {
-        $position = "sell";
+    if (isset($lastRsi)) {
+        $rsiTrend = ($rsi - $lastRsi) > 0;
+        if ($rsi <= 30 && isHammer($candles[$lastPos])) {
+            $position = "buy";
+        } elseif ($rsi >= 70) {
+            $position = "sell";
+        }
     }
-    if (round($walletB->getFunds(), 5) > 0) {
-        $ltcPotLow = $walletB->getFunds() / $candles[$lastPos][1];
-        $ltcPotHigh = $walletB->getFunds() / $candles[$lastPos][2];
-        $diffLow = $ltcPotLow - $lastFundsLTC - ($ltcPotLow * 0.0035);
-        $diffHigh = $ltcPotHigh - $lastFundsLTC - ($ltcPotHigh * 0.0035);
-        $ratioLow = (($diffLow / $lastFundsLTC) * 100);
-        $ratioHigh = (($diffHigh / $lastFundsLTC) * 100);
-        if (($ratioLow < -3 || $ratioHigh < -3)) {
+
+    if (round($walletB->getFunds(), 5) > 0 && $lastFunds != 0) {
+        $ltcPot = $walletB->getFunds() / $candles[$lastPos][3];
+        $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
+        $ratio = (($diff / $lastFunds) * 100);
+        if ($ratio < -1.5 || $ratio > 0.3) {
             $position = "buy";
         }
     }
-    //if (round($walletA->getFunds(), 5) > 0) {
-    //    $btcPot = $walletA->getFunds() * $candles[$lastPos][3];
-    //    $fees = $btcPot * 0.0035;
-    //    $diff = $btcPot - $lastFundsBTC - $fees;
-    //    $ratioGain = (($diff / $lastFundsBTC) * 100);
-    //    if ($ratioGain < -2) {
-    //        $position = "sell";
-    //    } elseif ($ratioGain > 5) {
-    //        $position = "buy";
-    //    }
-    //}
-    if ($position == "sell" && round($walletA->getFunds(), 5) > 0) {
-        $position = "none";
-        $nFunds = $walletA->getFunds() * $candles[$lastPos][3];
-        $fees = $nFunds * 0.0035;
-        $lastFundsLTC = $walletA->getFunds();
-        $walletB->setFunds($nFunds - $fees);
-        $walletA->setFunds(0);
-        usleep(50000);
-    } elseif ($position == "buy" && round($walletB->getFunds(), 5) > 0) {
-        $position = "none";
-        $nFunds = $walletB->getFunds() / $candles[$lastPos][3];
-        $fees = $nFunds * 0.0035;
-        $lastFundsBTC = $walletB->getFunds();
-        $walletA->setFunds($nFunds - $fees);
-        $walletB->setFunds(0);
-        if ($walletA->getFunds() > $lastFundsLTC) {
-            echo "\e[32mWIN => ". ($walletA->getFunds() - $lastFundsLTC) ."\n";
-            $wins++;
-        } else {
-            echo "\e[31mLOSS => ". ($walletA->getFunds() - $lastFundsLTC) ."\n";
-            $losses++;
+
+    if ($rsi < 70 && $rsi > 30) {
+        if ($position == "sell" && round($walletA->getFunds(), 5) > 0) {
+            $position = "none";
+            $nFunds = $walletA->getFunds() * $candles[$lastPos][3];
+            $fees = $nFunds * 0.00075;
+            $lastFunds = $walletA->getFunds();
+            $walletB->setFunds($nFunds - $fees);
+            $walletA->setFunds(0);
+            echo "\e[34mDATE => ". date("Y-m-d H:i:s", ($candles[$lastPos][0] / 1000)) ."\n";
+            //usleep(50000);
+        } elseif ($position == "buy" && round($walletB->getFunds(), 5) > 0) {
+            $position = "none";
+            $nFunds = $walletB->getFunds() / $candles[$lastPos][3];
+            $fees = $nFunds * 0.00075;
+            $lastFundsBTC = $walletB->getFunds();
+            $walletA->setFunds($nFunds - $fees);
+            $walletB->setFunds(0);
+            if ($walletA->getFunds() > $lastFunds) {
+                echo "\e[32mWIN => ". ($walletA->getFunds() - $lastFunds) ."\n";
+                $wins++;
+            } else {
+                echo "\e[31mLOSS => ". ($walletA->getFunds() - $lastFunds) ."\n";
+                $losses++;
+            }
+            echo "\e[35mDATE => ". date("Y-m-d H:i:s", ($candles[$lastPos][0] / 1000)) ."\n";
+            //usleep(50000);
         }
-        echo "\e[35mDATE => ". date("Y-m-d H:i:s", ($candles[$lastPos][0])) ."\n";
-        usleep(50000);
     }
+    $lastRsi = $rsi;
     $lastPos--;
 }
 if (round($walletA->getFunds(), 5) == 0) {
@@ -176,8 +153,8 @@ if (round($walletA->getFunds(), 5) == 0) {
     $walletB->setFunds(0);
 }
 
-echo "\e[39mLTC => ". $walletA->getFunds()."\n";
-echo "BTC => ". $walletB->getFunds()."\n";
+echo "\e[39mLTC => ". round($walletA->getFunds(), 4)."\n";
+echo "BNB => ". round($walletB->getFunds(), 4)."\n";
 echo "TRADE GAGNANT => ". $wins."\n";
 echo "TRADE PERDANT => ". $losses."\n";
 echo "\e[34mTAUX DE REUSSITES : ". round(($wins / ($losses + $wins)) * 100, 2) ."%\n";

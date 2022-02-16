@@ -86,7 +86,7 @@ function isEngulfing($candles, $pos) {
 $api = new BinanceTradeAPI();
 $candles = array_reverse($api->getCandles("LTCBNB", "1m"));
 
-$walletA = new Wallet("LTC", 1.00);
+$walletA = new Wallet("LTC", 0.88);
 $walletB = new Wallet("BNB", 0);
 
 

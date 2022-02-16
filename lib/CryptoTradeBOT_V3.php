@@ -145,11 +145,11 @@ class CryptoTradeBOT_V3 {
             $this->signal = "buy";
         }
 
-        if (round($walletB->getFunds(), 5) > 0 && $this->lastFunds != 0) {
-            $ltcPot = $walletB->getFunds() / $currentPrice;
-            $diff = $ltcPot - $this->lastFunds - ($ltcPot * 0.0001);
-            $ratio = (($diff / $this->lastFunds) * 100);
-            if ($ratio < $perteMax || $ratio > $gainMax) {
+        if (round($walletB->getFunds(), 2) > 0 && $lastFunds != 0) {
+            $ltcPot = $walletB->getFunds() / $candles[$lastPos][3];
+            $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
+            $ratio = (($diff / $lastFunds) * 100);
+            if ($ratio < -1.5 || $ratio > 0.3) {
                 $position = "buy";
             }
         }
