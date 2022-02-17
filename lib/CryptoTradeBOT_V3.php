@@ -48,7 +48,7 @@ class CryptoTradeBOT_V3 {
         if ($avgB != 0 && $avgH != 0)
             $rsi = 100 - ((100/(1 + ($avgH/$avgB))));
         else
-            $rsi = 100 - (100/1);
+            $rsi = 100 - (100/2);
         return $rsi;
     }
 
@@ -91,7 +91,7 @@ class CryptoTradeBOT_V3 {
                 system("clear");
                 if (!isset($orderBis) || !isset($orderBis["status"]))
                     return 0;
-                echo "ORDER BUY STATUS => ". $orderBis["status"] ."...\n";
+                echo "ORDER SELL STATUS => ". $orderBis["status"] ."...\n";
                 if ($orderBis["status"] == "CANCELED")
                     return 0;
                 sleep(5);
@@ -134,67 +134,23 @@ class CryptoTradeBOT_V3 {
         return 0;
     }
 
-    public function upOrDown($pos) {
-        if ($this->getRSI(15, $pos) > $this->getRSI(15, $pos + 1) && $this->getRSI(15, $pos + 1) > $this->getRSI(15, $pos + 2)) {
-            return "UP";
-        } elseif ($this->getRSI(15, $pos) < $this->getRSI(15, $pos + 1) && $this->getRSI(15, $pos + 1) < $this->getRSI(15, $pos + 2)) {
-            return "DOWN";
-        } else {
-            return false;
-        }
-    }
-
-
-    public function isHammer($candle) {
-        if ($candle[4] > $candle[3]) {
-            $diffCand = $candle[4] - $candle[3];
-            $diffAvg = $candle[2] - $candle[4];
-            if ($diffAvg / $diffCand > 1)
-                return true;
-        } else {
-            $diffCand = $candle[3] - $candle[4];
-            $diffAvg = $candle[2] - $candle[3];
-            $ratio = 0;
-            if ($diffCand != 0 && $diffAvg != 0)
-                $ratio = $diffAvg / $diffCand;
-            if ($ratio > 1)
-                return true;
-        }
-        return false;
-    }
-
-    public function makeDecision($currentPrice) {
+    public function makeDecision($currentPrice, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $rsi = $this->getRSI(15, 1);
+        $rsi = $this->getRSI(15, $pos + 2);
         $lastFunds = $this->lastFunds;
-        $candleA = $this->getCandle(0);
-        $candleB = $this->getCandle(5);
+        $candleB = $this->getCandle($pos + 5);
         if ($rsi >= 67) {
             $this->signal = "sell";
         } elseif ($rsi <= 33) {
             $this->signal = "buy";
         }
-        
-        if (round($walletB->getFunds(), 2) > 0 && $lastFunds != 0) {
-            $ltcPot = $walletB->getFunds() / $currentPrice;
-            $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
-            $ratio = (($diff / $lastFunds) * 100);
-            if ($ratio > 3.6) {
-                $this->signal = "close";
-            } elseif ($ratio < -4) {
-                $this->signal = "close";
-            }
-        }
 
-        if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05 && round(($candleA[4] - $candleB[4]) * 10000, 2) > 15) {
+        if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05 && round(($currentPrice - $candleB[4]) * 10000, 2) > 15) {
             $this->signal = "none";
             $this->lastFunds = $walletA->getFunds();
             $this->sell($currentPrice);
-        } elseif ($this->signal == "buy" && round($walletB->getFunds(), 2) > 0.05 && round(($candleA[4] - $candleB[4]) * 10000, 2) < -15) {
-            $this->signal = "none";
-            $this->buy($currentPrice);
-        } elseif ($this->signal == "close" && round($walletB->getFunds(), 2) > 0.05) {
+        } elseif ($this->signal == "buy" && round($walletB->getFunds(), 2) > 0.05 && round(($currentPrice - $candleB[4]) * 10000, 2) < -15) {
             $this->signal = "none";
             $this->buy($currentPrice);
         }

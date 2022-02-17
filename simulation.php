@@ -88,60 +88,21 @@ while ($lastPos >= 0) {
     $rsi = getRSI($candles, $lastPos + 1);
     $h = (int) date("H", $candles[$lastPos][0]/1000);
     $price = $candles[$lastPos][4];
-    if ($rsi <= 30)
-        $available = true;
-    if ($rsi <= 30 && upOrDown($candles, $lastPos) == "UP") {
+    $priceB = $candles[$lastPos + 5][4];
+    if ($rsi <= 33) {
         $position = "buy";
-    } elseif ($rsi >= 70 && upOrDown($candles, $lastPos) == "DOWN") {
+    } elseif ($rsi >= 67) {
         $position = "sell";
     }
 
-    if (round($walletB->getFunds(), 5) > 0 && $lastFunds != 0) {
-        $ltcPot = $walletB->getFunds() / $price;
-        $diff = $ltcPot - $lastFunds - ($ltcPot * 0.00075);
-        $ratio = (($diff / $lastFunds) * 100);
-        if ($ratio >= 1) {
-            //$fees = $walletA->getFunds() * 0.00075;
-            $gain = $lastFunds * 0.01;
-            $nFunds = $lastFunds + $gain;
-            $walletA->setFunds($nFunds);
-            $walletB->setFunds(0);
-            $available = false;
-            if ($walletA->getFunds() > $lastFunds) {
-                echo "\e[32mWIN => ". ($walletA->getFunds() - $lastFunds) ."\n";
-                $wins++;
-            } else {
-                echo "\e[31mLOSS => ". ($walletA->getFunds() - $lastFunds) ."\n";
-                $losses++;
-            }
-            echo "\e[35mDATE => ". date("Y-m-d H:i:s", ($candles[$lastPos][0] / 1000)) ."\n";
-        } elseif ($ratio <= -1) {
-            $available = false;
-            $gain = $lastFunds * 0.01;
-            $nFunds = $lastFunds + $gain;
-            $walletA->setFunds($nFunds);
-            $walletB->setFunds(0);
-            $fees = $ltcPot * 0.00075;
-            $walletA->setFunds($ltcPot - $fees);
-            $walletB->setFunds(0);
-            if ($walletA->getFunds() > $lastFunds) {
-                echo "\e[32mWIN => ". ($walletA->getFunds() - $lastFunds) ."\n";
-                $wins++;
-            } else {
-                echo "\e[31mLOSS => ". ($walletA->getFunds() - $lastFunds) ."\n";
-                $losses++;
-            }
-        }
-    }
-
-    if ($position == "sell" && round($walletA->getFunds(), 5) > 0) {
+    if ($position == "sell" && round($walletA->getFunds(), 5) > 0 && round(($price - $priceB) * 10000) > 15) {
         $position = "none";
         $nFunds = $walletA->getFunds() * $price;
         $fees = $nFunds * 0.00075;
         $lastFunds = $walletA->getFunds();
         $walletB->setFunds($nFunds - $fees);
         $walletA->setFunds(0);
-    } elseif ($position == "buy" && round($walletB->getFunds(), 5) > 0) {
+    } elseif ($position == "buy" && round($walletB->getFunds(), 5) > 0 && round(($price - $priceB) * 10000) < -15) {
         $position = "none";
         $nFunds = $walletB->getFunds() / $price;
         $fees = $nFunds * 0.00075;
