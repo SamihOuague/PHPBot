@@ -34,7 +34,7 @@ class BinanceTradeAPI extends BinanceConnector {
             "side" => $side,
             "type" => $type,
         ];
-        if ($side == "buy") { 
+        if ($side == "buy") {
             $elt["quoteOrderQty"] = round(($size - 1), 0, PHP_ROUND_HALF_DOWN); 
         } else {
             $elt["quantity"] =  round(($size - 1), 0, PHP_ROUND_HALF_DOWN);

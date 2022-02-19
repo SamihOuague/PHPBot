@@ -19,10 +19,8 @@ $candles = array_reverse($api->getCandles("CHZUSDT", "1m"));
 if (isset($walletA) && isset($walletB)) {
     $bot = new CryptoTradeBOT_V3($walletA, $walletB, $candles);
 }
-//var_dump(date("Y-m-d H:i:s", $bot->getCandles()[0][0]/1000));
-
-//var_dump($walletA->getFunds());
-
+$tick = $api->ticker("CHZUSDT");
+$bot->buy($tick["price"]);
 while (true) {
     $tick = $api->ticker("CHZUSDT");
     if (isset($tick) && isset($tick["price"])) {
@@ -42,11 +40,12 @@ while (true) {
             $bnb = round($bot->getWalletA()->getFunds() * $tick["price"], 5);
             echo "USDT potentiel => ". ($bnb - ($bnb * 0.00075)) ."\n";
         }
-        $bot->makeDecision($api->ticker("LTCBNB")["price"]);
+        $bot->makeDecision($api->ticker("CHZUSDT")["price"]);
         echo "USDT => ". round($bot->getWalletB()->getFunds(), 5) ."\n";
         echo "CHZ => ". round($bot->getWalletA()->getFunds(), 5) ."\n";
         echo "price => ". $tick["price"] ." USDT\n";
         echo "RSI => ". $bot->getRSI() ."\n";
+        echo "STOP LOSS => ". $bot->stopLoss ."\n";
         echo "LAST CANDLE => ". date("Y-m-d H:i:s", ($candles[0][0] / 1000));
     }
     sleep(60);

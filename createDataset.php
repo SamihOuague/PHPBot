@@ -2,7 +2,7 @@
 require_once("lib/Binance/BinanceTradeAPI.php");
 $api = new BinanceTradeAPI();
 $candles = [];
-$index = 50;
+$index = 1200;
 $start = (time() - (60 * 500)) * 1000;
 while ($index > 0) {
     $candles0 = $api->getCandles("CHZUSDT", "1m", $start);
@@ -10,8 +10,9 @@ while ($index > 0) {
         $start = (($start / 1000) - (60 * 500)) * 1000;
         $candles = array_merge($candles, array_reverse($candles0));
     }
-    var_dump(count($candles));
-    sleep(1);
+    system("clear");
+    echo "Download... ". round(((1200 - $index) / 1200)*100, 2)."%\n";
+    usleep(500000);
     $index--;
 }
 

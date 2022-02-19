@@ -10,6 +10,7 @@ class Simulation {
     public $lastFundsBNB;
     public $stopLoss;
     public $takeProfit;
+    public $lastLoss;
     public $wins = 0;
     public $losses = 0;
 
@@ -131,6 +132,7 @@ class Simulation {
                 echo "\e[32m+". $diff ." ". $curr ."\n\e[39m";
             } else {
                 $this->losses++;
+                $this->lastLoss = $this->getCandle($pos)[0]/1000;
                 echo "\e[31m".$diff." ". $curr."\n\e[39m";
             }
         }
