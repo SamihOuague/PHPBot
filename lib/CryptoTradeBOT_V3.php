@@ -9,6 +9,8 @@ class CryptoTradeBOT_V3 {
     protected $api;
     public $signal;
     public $lastFunds;
+    public $takeProfit;
+    public $stopLoss;
 
     public function __construct($walletA, $walletB, $dataset) {
         $this->setCandles($dataset);
@@ -83,11 +85,11 @@ class CryptoTradeBOT_V3 {
     public function sell($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $order = $this->api->createOrder("LTCBNB", "sell", substr($walletA->getFunds(), 0, 5), $price);
+        $order = $this->api->createOrder("CHZUSDT", "sell", substr($walletA->getFunds(), 0, 5), $price);
         if (isset($order["orderId"])) {
-            $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
+            $orderBis = $this->api->getOrder("CHZUSDT", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
-                $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
+                $orderBis = $this->api->getOrder("CHZUSDT", $order["orderId"]);
                 system("clear");
                 if (!isset($orderBis) || !isset($orderBis["status"]))
                     return 0;
@@ -110,11 +112,11 @@ class CryptoTradeBOT_V3 {
     public function buy($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $order = $this->api->createOrder("LTCBNB", "buy", substr($walletB->getFunds()  / $price, 0, 5), $price);
+        $order = $this->api->createOrder("CHZUSDT", "buy", substr($walletB->getFunds()  / $price, 0, 5), $price);
         if (isset($order["orderId"])) {
-            $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
+            $orderBis = $this->api->getOrder("CHZUSDT", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
-                $orderBis = $this->api->getOrder("LTCBNB", $order["orderId"]);
+                $orderBis = $this->api->getOrder("CHZUSDT", $order["orderId"]);
                 system("clear");
                 if (!isset($orderBis) || !isset($orderBis["status"]))
                     return 0;
@@ -134,25 +136,60 @@ class CryptoTradeBOT_V3 {
         return 0;
     }
 
+    public function isHammer($candle) {
+        if ($candle[4] > $candle[1]) {
+            $diffCand = $candle[4] - $candle[1];
+            $diffAvg = $candle[2] - $candle[4];
+            if ($diffAvg / $diffCand > 1)
+                return true;
+        } else {
+            $diffCand = $candle[1] - $candle[4];
+            $diffAvg = $candle[2] - $candle[1];
+            $ratio = 0;
+            if ($diffCand != 0 && $diffAvg != 0)
+                $ratio = $diffAvg / $diffCand;
+            if ($ratio > 1)
+                return true;
+        }
+        return false;
+    }
+
     public function makeDecision($currentPrice, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $rsi = $this->getRSI(15, $pos + 2);
-        $lastFunds = $this->lastFunds;
-        $candleB = $this->getCandle($pos + 5);
-        if ($rsi >= 67) {
-            $this->signal = "sell";
-        } elseif ($rsi <= 33) {
+        $rsi = $this->getRSI(15, $pos);
+        $nStopA = $currentPrice - ($currentPrice * 0.008);
+        $nLimitB = $currentPrice + ($currentPrice * 0.01);
+        if ($this->stopLoss < $nStopA) {
+            $this->stopLoss = $nStopA;
+        }
+
+        if ($this->takeProfit > $nLimitB) {
+            $this->takeProfit = $nLimitB;
+        }
+        
+        if ($this->isHammer($this->getCandle($pos)) && $rsi <= 30) {
             $this->signal = "buy";
         }
 
-        if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05 && round(($currentPrice - $candleB[4]) * 10000, 2) > 15) {
+        if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 0.05) {
             $this->signal = "none";
-            $this->lastFunds = $walletA->getFunds();
-            $this->sell($currentPrice);
-        } elseif ($this->signal == "buy" && round($walletB->getFunds(), 2) > 0.05 && round(($currentPrice - $candleB[4]) * 10000, 2) < -15) {
+            $this->sell(($currentPrice <= $this->stopLoss) ? $this->stopLoss : $this->takeProfit);
+            $this->available = false;
+            $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
+        }
+
+        //if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05) {
+        //    $this->signal = "none";
+        //    $this->sell($currentPrice);
+        //    $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
+        //}
+        if ($this->signal == "buy" && $rsi > $this->getRSI(15, $pos + 1) && round($walletB->getFunds(), 2) > 0.05) {
             $this->signal = "none";
+            $this->stopLoss = $currentPrice - ($currentPrice * 0.008);
             $this->buy($currentPrice);
+            //$this->available = false;
+            //$this->winOrLoss($walletA->getFunds(), $this->lastFundsLTC, $pos, "CHZ");
         }
     }
 }
