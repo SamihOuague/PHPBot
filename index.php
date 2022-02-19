@@ -35,10 +35,10 @@ while (true) {
         }
         system("clear");
         echo "Signal => ". $bot->signal ."\n";
-        if (round($bot->getWalletB()->getFunds(), 2) > 0) {
+        if (round($bot->getWalletB()->getFunds()) > 10) {
             $ltc = round($bot->getWalletB()->getFunds() / $tick["price"], 5);
             echo "CHZ potentiel => ". ($ltc - ($ltc * 0.00075)) ."\n";
-        } elseif (round($bot->getWalletA()->getFunds(), 2) > 0) {
+        } elseif (round($bot->getWalletA()->getFunds()) > 10) {
             $bnb = round($bot->getWalletA()->getFunds() * $tick["price"], 5);
             echo "USDT potentiel => ". ($bnb - ($bnb * 0.00075)) ."\n";
         }

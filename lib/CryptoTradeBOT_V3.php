@@ -85,7 +85,8 @@ class CryptoTradeBOT_V3 {
     public function sell($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $order = $this->api->createOrder("CHZUSDT", "sell", substr($walletA->getFunds(), 0, 5), $price);
+        $order = $this->api->createOrder("CHZUSDT", "sell", round($walletA->getFunds()), $price);
+        var_dump($order);
         if (isset($order["orderId"])) {
             $orderBis = $this->api->getOrder("CHZUSDT", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
@@ -112,7 +113,8 @@ class CryptoTradeBOT_V3 {
     public function buy($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $order = $this->api->createOrder("CHZUSDT", "buy", substr($walletB->getFunds()  / $price, 0, 5), $price);
+        $order = $this->api->createOrder("CHZUSDT", "buy", round($walletB->getFunds()), $price);
+        var_dump($order);
         if (isset($order["orderId"])) {
             $orderBis = $this->api->getOrder("CHZUSDT", $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
@@ -172,7 +174,7 @@ class CryptoTradeBOT_V3 {
             $this->signal = "buy";
         }
 
-        if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 0.05) {
+        if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 10) {
             $this->signal = "none";
             $this->sell(($currentPrice <= $this->stopLoss) ? $this->stopLoss : $this->takeProfit);
             $this->available = false;
@@ -184,7 +186,7 @@ class CryptoTradeBOT_V3 {
         //    $this->sell($currentPrice);
         //    $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
         //}
-        if ($this->signal == "buy" && $rsi > $this->getRSI(15, $pos + 1) && round($walletB->getFunds(), 2) > 0.05) {
+        if ($this->signal == "buy" && $rsi > $this->getRSI(15, $pos + 1) && round($walletB->getFunds(), 2) > 10) {
             $this->signal = "none";
             $this->stopLoss = $currentPrice - ($currentPrice * 0.008);
             $this->buy($currentPrice);

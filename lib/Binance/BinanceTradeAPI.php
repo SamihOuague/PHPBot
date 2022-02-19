@@ -28,17 +28,20 @@ class BinanceTradeAPI extends BinanceConnector {
         return $this->createRequest("/api/v3/order", "GET", ["symbol"=>$symbol, "orderId"=>$orderId]);
     }
 
-    public function createOrder($symbol, $side, $size, $price, $tif="GTC", $type="limit") {
+    public function createOrder($symbol, $side, $size, $price, $tif="GTC", $type="market") {
+        $elt = [
+            "symbol" => $symbol,
+            "side" => $side,
+            "type" => $type,
+        ];
+        if ($side == "buy") { 
+            $elt["quoteOrderQty"] = round(($size - 1), 0, PHP_ROUND_HALF_DOWN); 
+        } else {
+            $elt["quantity"] =  round(($size - 1), 0, PHP_ROUND_HALF_DOWN);
+        }
         return $this->createRequest("/api/v3/order", 
                                     "POST", 
-                                    [
-                                        "symbol" => $symbol,
-                                        "side" => $side,
-                                        "type" => $type,
-                                        "quantity" => $size,
-                                        "price" => $price,
-                                        "timeInForce"=> $tif,
-                                    ]
+                                    $elt,
                                 );
     }
 
