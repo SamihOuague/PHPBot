@@ -35,6 +35,7 @@ while (true) {
         echo "price => ". $tick["price"] ." USDT\n";
         echo "RSI => ". $bot->getRSI() ."\n";
         echo "STOP LOSS => ". $bot->stopLoss ."\n";
+        echo "TAKE PROFIT => ". $bot->takeProfit ."\n";
         echo "LAST CANDLE => ". date("Y-m-d H:i:s", ($candles[0][0] / 1000));
     }
     sleep(5);

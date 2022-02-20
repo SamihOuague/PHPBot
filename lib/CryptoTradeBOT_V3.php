@@ -9,6 +9,7 @@ class CryptoTradeBOT_V3 {
     protected $api;
     public $signal;
     public $stopLoss;
+    public $takeProfit;
     public $pairs;
 
     public function __construct($dataset, $pairs = "CHZUSDT") {
@@ -16,6 +17,7 @@ class CryptoTradeBOT_V3 {
         $this->api = new BinanceTradeAPI();
         $this->signal = "none";
         $this->stopLoss = round($this->getCandle(0)[4] - ($this->getCandle(0)[4] * 0.01), 4);
+        $this->takeProfit = round($this->getCandle(0)[4] + ($this->getCandle(0)[4] * 0.01), 4);
         $this->pairs = $pairs;
         $this->refreshAccounts();
     }
@@ -164,7 +166,7 @@ class CryptoTradeBOT_V3 {
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI(15, $pos);
         $nStopA = $currentPrice - ($currentPrice * 0.01);
-        $nLimitA = $currentPrice + ($currentPrice * 0.01);
+        $nLimitB = $currentPrice + ($currentPrice * 0.01);
         if ($this->stopLoss < $nStopA)
             $this->stopLoss = round($nStopA, 4);
 
