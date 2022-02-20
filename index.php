@@ -6,21 +6,10 @@ require_once("lib/Wallet.php");
 $api = new BinanceTradeAPI();
 $accounts = $api->getAccounts();
 
-$walletA;
-$walletB;
-foreach ($accounts["balances"] as $key => $value) {
-    if ($value["asset"] == "USDT")
-        $walletB = new Wallet("USDT", $value["free"]);
-    elseif ($value["asset"] == "CHZ")
-        $walletA = new Wallet("CHZ", $value["free"]);
-}
 
 $candles = array_reverse($api->getCandles("CHZUSDT", "1m"));
-if (isset($walletA) && isset($walletB)) {
-    $bot = new CryptoTradeBOT_V3($walletA, $walletB, $candles);
-}
-$tick = $api->ticker("CHZUSDT");
-$bot->buy($tick["price"]);
+
+$bot = new CryptoTradeBOT_V3($candles);
 while (true) {
     $tick = $api->ticker("CHZUSDT");
     if (isset($tick) && isset($tick["price"])) {
@@ -48,5 +37,5 @@ while (true) {
         echo "STOP LOSS => ". $bot->stopLoss ."\n";
         echo "LAST CANDLE => ". date("Y-m-d H:i:s", ($candles[0][0] / 1000));
     }
-    sleep(60);
+    sleep(5);
 }

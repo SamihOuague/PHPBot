@@ -8,20 +8,16 @@ class CryptoTradeBOT_V3 {
     protected $walletB;
     protected $api;
     public $signal;
-    public $lastFunds;
-    public $takeProfit;
     public $stopLoss;
     public $pairs;
 
-    public function __construct($walletA, $walletB, $dataset, $pairs = "CHZUSDT") {
+    public function __construct($dataset, $pairs = "CHZUSDT") {
         $this->setCandles($dataset);
-        $this->setWalletA($walletA);
-        $this->setWalletB($walletB);
         $this->api = new BinanceTradeAPI();
         $this->signal = "none";
-        $this->lastFunds = $walletA->getFunds();
-        $this->stopLoss = $this->getCandle(0)[4] - ($this->getCandle(0)[4] * 0.008);
+        $this->stopLoss = round($this->getCandle(0)[4] - ($this->getCandle(0)[4] * 0.01), 4);
         $this->pairs = $pairs;
+        $this->refreshAccounts();
     }
 
     public function getRSI($period = 15, $pos = 0) {
@@ -85,6 +81,22 @@ class CryptoTradeBOT_V3 {
         return $this->walletB = $wallet;
     }
 
+    public function refreshAccounts() {
+        $api = $this->api;
+        $accounts = $api->getAccounts();
+        if (isset($accounts["balances"])) {
+            foreach ($accounts["balances"] as $key => $value) {
+                if ($value["asset"] == "USDT")
+                    $this->setWalletB(new Wallet("USDT", $value["free"]));
+                elseif ($value["asset"] == "CHZ")
+                    $this->setWalletA(new Wallet("CHZ", $value["free"]));
+            }
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
     public function sell($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
@@ -99,14 +111,9 @@ class CryptoTradeBOT_V3 {
                 echo "ORDER SELL STATUS => ". $orderBis["status"] ."...\n";
                 if ($orderBis["status"] == "CANCELED")
                     return 0;
-                sleep(5);
+                sleep(1);
             }
-            $size = $walletA->getFunds() * $price;
-            $fees = $size * $fee;
-            $walletB->setFunds($size - $fees);
-            $walletA->setFunds(0);
-            $this->setWalletA($walletA);
-            $this->setWalletB($walletB);
+            $this->refreshAccounts();
             return $orderBis;
         }
         return 0;
@@ -116,7 +123,6 @@ class CryptoTradeBOT_V3 {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $order = $this->api->createOrder($this->pairs, "buy", round($walletB->getFunds()), $price);
-        var_dump($order);
         if (isset($order["orderId"])) {
             $orderBis = $this->api->getOrder($this->pairs, $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
@@ -127,14 +133,9 @@ class CryptoTradeBOT_V3 {
                 echo "ORDER BUY STATUS => ". $orderBis["status"] ."...\n";
                 if ($orderBis["status"] == "CANCELED")
                     return 0;
-                sleep(5);
+                sleep(1);
             }
-            $size = $walletB->getFunds() / $price;
-            $fees = $size * $fee;
-            $walletA->setFunds($size - $fees);
-            $walletB->setFunds(0);
-            $this->setWalletA($walletA);
-            $this->setWalletB($walletB);
+            $this->refreshAccounts();
             return $orderBis;
         }
         return 0;
@@ -162,9 +163,9 @@ class CryptoTradeBOT_V3 {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI(15, $pos);
-        $nStopA = $currentPrice - ($currentPrice * 0.008);
+        $nStopA = $currentPrice - ($currentPrice * 0.05);
         if ($this->stopLoss < $nStopA) {
-            $this->stopLoss = $nStopA;
+            $this->stopLoss = round($nStopA, 4);
         }
         
         if ($this->isHammer($this->getCandle($pos)) && $rsi <= 30) {
@@ -178,7 +179,7 @@ class CryptoTradeBOT_V3 {
 
         if ($this->signal == "buy" && $rsi > $this->getRSI(15, $pos + 1) && round($walletB->getFunds(), 2) > 10) {
             $this->signal = "none";
-            $this->stopLoss = $currentPrice - ($currentPrice * 0.008);
+            $this->stopLoss = round($currentPrice - ($currentPrice * 0.01), 4);
             $this->buy($currentPrice);
         }
     }

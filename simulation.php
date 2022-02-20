@@ -4,7 +4,7 @@ require_once("lib/autoload.php");
 class Strategy extends Simulation {
     public $available = true;
     public function __construct($walletA, $walletB, $candles) {
-        parent::__construct($walletA, $walletB, $candles, 0.01);
+        parent::__construct($walletA, $walletB, $candles, 0.09);
     }
 
     function isHanged($candle) {
@@ -47,39 +47,26 @@ class Strategy extends Simulation {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI(15, $pos);
-        $nStopA = $currentPrice - ($currentPrice * 0.008);
-        $nLimitB = $currentPrice + ($currentPrice * 0.01);
-            if ($this->stopLoss < $nStopA) {
-                $this->stopLoss = $nStopA;
-            }
-
-            if ($this->takeProfit > $nLimitB) {
-                $this->takeProfit = $nLimitB;
-            }
-
-            if ($this->isHammer($this->getCandle($pos)) && $rsi <= 30) {
-                $this->signal = "buy";
-            }
-
-            if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 0.05) {
-                $this->signal = "none";
-                $this->sell(($currentPrice <= $this->stopLoss) ? $this->stopLoss : $this->takeProfit);
-                $this->available = false;
-                $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
-            }
-
-            //if ($this->signal == "sell" && round($walletA->getFunds(), 2) > 0.05) {
-            //    $this->signal = "none";
-            //    $this->sell($currentPrice);
-            //    $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
-            //}
-            if ($this->signal == "buy" && ($rsi > $this->getRSI(15, $pos + 1)) && round($walletB->getFunds(), 2) > 0.05) {
-                $this->signal = "none";
-                $this->stopLoss = $currentPrice - ($currentPrice * 0.008);
-                $this->buy($currentPrice);
-                //$this->available = false;
-                //$this->winOrLoss($walletA->getFunds(), $this->lastFundsLTC, $pos, "CHZ");
-            }
+        $nStopA = $currentPrice - ($currentPrice * 0.05);
+        if ($this->stopLoss < $nStopA) {
+            $this->stopLoss = $nStopA;
         }
-    
+
+        if ($this->isHammer($this->getCandle($pos)) && $rsi <= 30) {
+            $this->signal = "buy";
+        }
+
+        if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 0.05) {
+            $this->signal = "none";
+            $this->sell(($currentPrice <= $this->stopLoss) ? $this->stopLoss : $this->takeProfit);
+            $this->available = false;
+            $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
+        }
+
+        if ($this->signal == "buy" && ($rsi > $this->getRSI(15, $pos + 1)) && round($walletB->getFunds(), 2) > 0.05) {
+            $this->signal = "none";
+            $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
+            $this->buy($currentPrice);
+        }
+    }
 }
