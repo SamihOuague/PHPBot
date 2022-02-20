@@ -47,8 +47,8 @@ class Strategy extends Simulation {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI(15, $pos);
-        $nStopA = $currentPrice - ($currentPrice * 0.01);
-        $nLimitB = $currentPrice + ($currentPrice * 0.01);
+        $nStopA = $currentPrice - ($currentPrice * 0.00001);
+        $nLimitB = $currentPrice + ($currentPrice * 0.00001);
         if ($this->stopLoss < $nStopA) {
             $this->stopLoss = $nStopA;
         }
@@ -58,14 +58,14 @@ class Strategy extends Simulation {
 
         if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 0.05) {
             $this->signal = "none";
-            $this->takeProfit = $currentPrice + ($currentPrice * 0.01);
+            $this->takeProfit = $currentPrice + ($currentPrice * 0.00001);
             $this->sell($this->stopLoss);
             $this->winOrLoss($walletB->getFunds(), $this->lastFundsBNB, $pos, "USDT");
         }
 
         if ($currentPrice >= $this->takeProfit && round($walletB->getFunds(), 2) > 0.05) {
             $this->signal = "none";
-            $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
+            $this->stopLoss = $currentPrice - ($currentPrice * 0.00001);
             $this->buy($this->takeProfit);
         }
     }
