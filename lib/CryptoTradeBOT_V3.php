@@ -163,17 +163,17 @@ class CryptoTradeBOT_V3 {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $rsi = $this->getRSI(15, $pos);
-        $nStopA = $currentPrice - ($currentPrice * 0.05);
-        if ($this->stopLoss < $nStopA) {
+        $nStopA = $currentPrice - ($currentPrice * 0.01);
+        $nLimitA = $currentPrice + ($currentPrice * 0.01);
+        if ($this->stopLoss < $nStopA)
             $this->stopLoss = round($nStopA, 4);
-        }
-        
-        if ($this->isHammer($this->getCandle($pos)) && $rsi <= 30) {
-            $this->signal = "buy";
-        }
+
+        if ($this->takeProfit > $nLimitB)
+            $this->takeProfit = round($nLimitB, 4);
 
         if ($currentPrice <= $this->stopLoss && round($walletA->getFunds(), 2) > 10) {
             $this->signal = "none";
+            $this->takeProfit = round($currentPrice + ($currentPrice * 0.01), 4);
             $this->sell($currentPrice);
         }
 

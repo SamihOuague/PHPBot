@@ -16,7 +16,6 @@ class BinanceTradeAPI extends BinanceConnector {
         $params = [
             "symbol" => $symbol,
             "interval" => $interval,
-            
         ];
         if ($start != "") {
             $params["startTime"] = $start;
