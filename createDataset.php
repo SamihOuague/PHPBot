@@ -2,12 +2,12 @@
 require_once("lib/Binance/BinanceTradeAPI.php");
 $api = new BinanceTradeAPI();
 $candles = [];
-$index = 100;
+$index = 15;
 $test = $index;
-$time = 900;
+$time = 3600;
 $start = (time() - ($time * 500)) * 1000;
 while ($index > 0) {
-    $candles0 = $api->getCandles("CHZUSDT", "15m", $start);
+    $candles0 = $api->getCandles("CHZUSDT", "1h", $start);
     if (is_array($candles0)) {
         $start = (($start / 1000) - ($time * 500)) * 1000;
         $candles = array_merge($candles, array_reverse($candles0));
@@ -18,4 +18,4 @@ while ($index > 0) {
     $index--;
 }
 
-file_put_contents("dataset.json", json_encode($candles));
+file_put_contents("dataset1.json", json_encode($candles));

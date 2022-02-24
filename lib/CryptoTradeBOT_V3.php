@@ -215,7 +215,9 @@ class CryptoTradeBOT_V3 {
             $this->winOrLoss($pos);
         }
 
-        if ($currentPrice < $ma7 && $rsi < 30 && $this->getWalletA()->getFunds() < 10) {
+        if ($this->getCandle($pos)[5] < $this->getCandle($pos + 1)[5] 
+            && $this->getCandle($pos + 1)[5] < $this->getCandle($pos + 2)[5] && 
+            $currentPrice < $ma7 && $rsi < 30 && $this->getWalletA()->getFunds() < 10) {
             //var_dump(date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000));
             $this->buy($currentPrice);
             $this->stopLoss = $currentPrice - ($currentPrice * 0.025);

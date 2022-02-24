@@ -48,10 +48,9 @@ class Strategy extends Simulation {
         $score = $this->getScore($pos, $currentPrice);
         $ma7 = $this->mobileAverage($pos, 7);
         $rsi = $this->getRSI(15, $pos);
+
         if ($this->stopLoss < $stop)
             $this->stopLoss = $stop;
-
-        
 
         if ($this->stopLoss >= $this->getCandle($pos)[3] && $this->getWalletA()->getFunds() > 0) {
             $this->sell($this->stopLoss);
@@ -60,7 +59,7 @@ class Strategy extends Simulation {
             echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."\n";
             echo "NOMBRE DE TRADE => ". ($this->wins + $this->losses)."\n";
             echo "TAUX DE REUSSITE => ". round($this->wins / ($this->wins + $this->losses) * 100, 2)."%\n";
-            usleep(50000);
+            usleep(500000);
         }
 
         if ($this->takeProfit <= $this->getCandle($pos)[2] && round($this->getWalletA()->getFunds(), 2) > 0) {
@@ -70,10 +69,13 @@ class Strategy extends Simulation {
             echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."\n";
             echo "NOMBRE DE TRADE => ". ($this->wins + $this->losses)."\n";
             echo "TAUX DE REUSSITE => ". round($this->wins / ($this->wins + $this->losses) * 100, 2)."%\n";
-            usleep(50000);
+            usleep(500000);
         }
 
-        if ($currentPrice < $ma7 && $rsi < 30 && $this->getWalletA()->getFunds() == 0) {
+        if ($this->getCandle($pos)[5] < $this->getCandle($pos + 1)[5] 
+            && $this->getCandle($pos + 1)[5] < $this->getCandle($pos + 2)[5]
+            && $currentPrice < $ma7 
+            && $this->getWalletA()->getFunds() == 0) {
             //var_dump(date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000));
             $this->buy($currentPrice);
             $this->stopLoss = $currentPrice - ($currentPrice * 0.025);

@@ -44,7 +44,7 @@ while (true) {
             echo "STOP LOSS => ". $bot->stopLoss ."\n";
             echo "MA 7 H1 => ". mobileAverage($candlesH1, 0) ."\n";
             echo "LAST CANDLE H1 => ". date("Y-m-d H:i:s", ($candlesH1[0][0] / 1000));
-            echo "LAST CANDLE M5 => ". date("Y-m-d H:i:s", ($candlesM5[0][0] / 1000));
+            echo "LAST CANDLE M5 => ". date("Y-m-d H:i:s", ($bot->getCandle(0)[0] / 1000));
         } else {
             system("clear");
             echo "USDT => ". round($bot->getWalletB()->getFunds() + $bot->getWalletA()->getFunds()*$tick["price"] - ($bot->getWalletA()->getFunds()*$tick["price"] * 0.00075), 4) ."\n";
@@ -52,7 +52,7 @@ while (true) {
             echo "STOP LOSS => ". $bot->stopLoss ."\n";
             echo "MA 7 => ". mobileAverage($candlesH1, 0) ."\n";
             echo "LAST CANDLE H1 => ". date("Y-m-d H:i:s", ($candlesH1[0][0] / 1000))."\n";
-            echo "LAST CANDLE M5 => ". date("Y-m-d H:i:s", ($candlesM5[0][0] / 1000));
+            echo "LAST CANDLE M5 => ". date("Y-m-d H:i:s", ($bot->getCandle(0)[0] / 1000));
         }
     }
     sleep(5);

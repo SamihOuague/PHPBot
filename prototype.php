@@ -13,7 +13,7 @@ function mobileAverage($candles, $pos, $period = 7) {
 
 
 $api = new BinanceTradeAPI();
-$candlesH1 = json_decode(file_get_contents("dataset1.json"));//array_reverse($api->getCandles("CHZUSDT", "1h"));
+$candlesH1 = json_decode(file_get_contents("dataset1.json"));
 $candlesM5 = json_decode(file_get_contents("dataset.json"));
 
 $lastPosM5 = count($candlesM5) - 100;
