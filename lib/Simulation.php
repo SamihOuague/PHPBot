@@ -12,13 +12,15 @@ class Simulation {
     public $lastLoss;
     public $wins = 0;
     public $losses = 0;
+    public $risk = 0.125;
 
-    public function __construct($dataset, $funds = 100, $sltp = 0.01) {
+    public function __construct($dataset, $funds = 100, $sltp = 0.02) {
         $this->setCandles($dataset);
         $this->setWalletA(new Wallet("CHZ", 0));
         $this->setWalletB(new Wallet("USDT", $funds));
         $this->lastFunds = $this->getWalletB()->getFunds();
         $this->available = true;
+        $this->lastLoss = false;
     }
 
     public function getRSI($period = 15, $pos = 0) {
@@ -88,7 +90,7 @@ class Simulation {
         if (round($walletA->getFunds(), 2) > 0) {
             $size = $walletA->getFunds() * $price;
             $fees = $size * $fee;
-            $walletB->setFunds($size - $fees);
+            $walletB->setFunds($walletB->getFunds() + $size - $fees);
             $walletA->setFunds(0);
             $this->setWalletA($walletA);
             $this->setWalletB($walletB);
@@ -100,12 +102,12 @@ class Simulation {
     public function buy($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        if (round($walletB->getFunds(), 2) > 0) {
-            $size = $walletB->getFunds() / $price;
+        if (round($walletA->getFunds(), 2) == 0) {
+            $size = ($walletB->getFunds()*$this->risk) / $price;
             $fees = $size * $fee;
             $walletA->setFunds($size - $fees);
             $this->lastFunds = $walletB->getFunds();
-            $walletB->setFunds(0);
+            $walletB->setFunds($walletB->getFunds() - ($walletB->getFunds() * $this->risk));
             $this->setWalletA($walletA);
             $this->setWalletB($walletB);
             return 1;
@@ -145,10 +147,13 @@ class Simulation {
             
             if ($diff >= 0) {
                 $this->wins++;
+                $this->risk = 0.125;
                 echo "\e[32m+". $diff ." ". $curr ."\n\e[39m";
             } else {
                 $this->losses++;
-                $this->lastLoss = $this->getCandle($pos)[0]/1000;
+                $size = $this->risk * 2;
+                if ($size <= 1)
+                    $this->risk = $size;
                 echo "\e[31m".$diff." ". $curr."\n\e[39m";
             }
         }

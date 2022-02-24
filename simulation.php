@@ -2,7 +2,7 @@
 require_once("lib/autoload.php");
 
 class Strategy extends Simulation {
-    public $available = true;
+    public $isLoss = false;
     public function __construct($candles, $funds = 100) {
         parent::__construct($candles, $funds);
     }
@@ -22,39 +22,62 @@ class Strategy extends Simulation {
             $candle = $this->getCandle($i);
             $sum += $candle[4];
         }
-        return round($sum/$period, 5);
+        return round($sum/$period, 4);
+    }
+
+    public function getScore($pos, $currentPrice) {
+        $ma7 = $this->mobileAverage($pos, 7);
+        $ma25 = $this->mobileAverage($pos, 25);
+        $ma99 = $this->mobileAverage($pos, 99);
+        $rsi = $this->getRSI(15, $pos);
+        $score = 0;
+
+        
+        if ($currentPrice < $ma7 && $rsi < 30)
+            $score++;
+
+
+        return $score;
     }
 
     public function makeDecision($currentPrice, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $limit = $this->avgCandles($pos);
-        $ma7 = $this->mobileAverage($pos + 5, 7);
-        $ma25 = $this->mobileAverage($pos + 5, 25);
-        $ma99 = $this->mobileAverage($pos + 5, 99);
+        $stop = $currentPrice - ($currentPrice * 0.03);
+        $score = $this->getScore($pos, $currentPrice);
+        $ma7 = $this->mobileAverage($pos, 7);
         $rsi = $this->getRSI(15, $pos);
-        $stop = $currentPrice - ($currentPrice * 0.08);
         if ($this->stopLoss < $stop)
             $this->stopLoss = $stop;
 
-        if (($currentPrice > $ma7 && $ma7 > $ma25 && $ma25 > $ma99) &&
-            $currentPrice > $this->mobileAverage($pos, 7) && $currentPrice > $this->mobileAverage($pos, 99)) {
-            $this->signal = "buy";
-        } else {
-            $this->signal = "none";
+        
+
+        if ($this->stopLoss >= $this->getCandle($pos)[3] && $this->getWalletA()->getFunds() > 0) {
+            $this->sell($this->stopLoss);
+            system("clear");
+            $this->winOrLoss($pos);
+            echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."\n";
+            echo "NOMBRE DE TRADE => ". ($this->wins + $this->losses)."\n";
+            echo "TAUX DE REUSSITE => ". round($this->wins / ($this->wins + $this->losses) * 100, 2)."%\n";
+            usleep(50000);
         }
 
-        if ($this->signal == "buy" && $rsi > 30 && $this->getWalletB()->getFunds() > 10) {
+        if ($this->takeProfit <= $this->getCandle($pos)[2] && round($this->getWalletA()->getFunds(), 2) > 0) {
+            $this->sell($this->takeProfit);
+            system("clear");
+            $this->winOrLoss($pos);
+            echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."\n";
+            echo "NOMBRE DE TRADE => ". ($this->wins + $this->losses)."\n";
+            echo "TAUX DE REUSSITE => ". round($this->wins / ($this->wins + $this->losses) * 100, 2)."%\n";
+            usleep(50000);
+        }
+
+        if ($currentPrice < $ma7 && $rsi < 30 && $this->getWalletA()->getFunds() == 0) {
+            //var_dump(date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000));
             $this->buy($currentPrice);
-            $this->stopLoss = $currentPrice - ($currentPrice * 0.08);
-            $this->takeProfit = $currentPrice + ($currentPrice * 0.1);
-        }
-
-        if (($this->stopLoss >= $currentPrice || $this->takeProfit <= $currentPrice)) {
-            if ($this->getWalletA()->getFunds() > 10) {
-                $this->sell($currentPrice);
-                $this->signal = "none";
-            }
+            $this->stopLoss = $currentPrice - ($currentPrice * 0.025);
+            $this->takeProfit = $currentPrice + ($currentPrice * 0.045);
         }
     }
 }
