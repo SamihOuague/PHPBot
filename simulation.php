@@ -41,12 +41,12 @@ class Strategy extends Simulation {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $stop = $currentPrice - ($currentPrice * 0.01);
-        $mA = $this->mobileAverage($pos, 50);
+        $mA = $this->mobileAverage($pos, 25);
         $rsi = $this->getRSI(9, $pos);
         //if ($this->stopLoss < $stop)
         //    $this->stopLoss = $stop;
         if ($this->getWalletA()->getFunds() == 0) {
-            if ($rsi < 12 && $this->priceAction($pos) && $mA > $currentPrice) {
+            if ($rsi < 5 && $this->priceAction($pos) && $mA > $currentPrice) {
                 $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
                 $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
                 $this->buy($currentPrice);

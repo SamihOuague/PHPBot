@@ -11,7 +11,7 @@ class CryptoTradeBOT_V3 {
     public $stopLoss;
     public $takeProfit;
     public $pairs;
-    public $risk = 0.125;
+    public $risk = 1;
     public $lastFunds;
     public $wins = 0;
     public $losses = 0;
@@ -134,7 +134,7 @@ class CryptoTradeBOT_V3 {
         if ($lastFunds > 0) {
             if ($diff >= 0) {
                 $this->wins++;
-                $this->risk = 0.125;
+                $this->risk = 1;
                 echo "\e[32m+". $diff ." ". $curr ."\n\e[39m";
             } else {
                 $this->losses++;
@@ -149,14 +149,15 @@ class CryptoTradeBOT_V3 {
     public function priceAction($pos) {
         $candleA = $this->getCandle($pos);
         $candleB = $this->getCandle($pos + 1);
-        if ($candleA[1] >= $candleB[1]
-            && $candleA[4] <= $candleB[4]) {
+        if (($candleA[1] >= $candleB[1]
+            && $candleA[4] <= $candleB[4] || $candleA[1] <= $candleB[4]
+            && $candleA[4] >= $candleB[1]) || $this->isHammer($pos)) {
             return true;
         } else {
             return false;
         }
     }
-
+    
     public function buy($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
