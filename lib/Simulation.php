@@ -12,7 +12,7 @@ class Simulation {
     public $lastLoss;
     public $wins = 0;
     public $losses = 0;
-    public $risk = 0.25;
+    public $risk = 0.5;
 
     public function __construct($dataset, $funds = 100, $sltp = 0.02) {
         $this->setCandles($dataset);
@@ -56,34 +56,6 @@ class Simulation {
         return $rsi;
     }
 
-    public function getCandles() {
-        return $this->candles;
-    }
-
-    public function setCandles(array $candles) {
-        return $this->candles = $candles;
-    }
-
-    public function getCandle(int $index) {
-        return $this->candles[$index];
-    }
-
-    public function getWalletA() {
-        return $this->walletA;
-    }
-
-    public function getWalletB() {
-        return $this->walletB;
-    }
-
-    public function setWalletA($wallet) {
-        return $this->walletA = $wallet;
-    }
-
-    public function setWalletB($wallet) {
-        return $this->walletB = $wallet;
-    }
-
     public function sell($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
@@ -115,10 +87,6 @@ class Simulation {
         return 0;
     }
 
-    public function getRatio($candleA, $candleB) {
-        return round((($candleA - $candleB) / $candleB) * 100, 2);
-    }
-
     public function isHammer($pos) {
         $candle = $this->getCandle($pos);
         if ($candle[4] > $candle[1]) {
@@ -138,24 +106,55 @@ class Simulation {
         return false;
     }
 
-    public function winOrLoss($pos = 0, $curr = "USDT") {
+    public function winOrLoss($pos = 0, $rsi = 0, $curr = "USDT") {
         $lastFunds = $this->lastFunds;
         $currentFunds = $this->getWalletB()->getFunds();
         $diff = $currentFunds - $lastFunds;
         if ($lastFunds > 0) {
             echo date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000)."\n";
-            
             if ($diff >= 0) {
                 $this->wins++;
-                $this->risk = 0.125;
+                $this->risk = 0.5;
                 echo "\e[32m+". $diff ." ". $curr ."\n\e[39m";
             } else {
                 $this->losses++;
                 $size = $this->risk * 2;
                 if ($size <= 1)
                     $this->risk = $size;
-                echo "\e[31m".$diff." ". $curr."\n\e[39m";
+                echo "\e[31m".$diff." ". $curr ."\n\e[39m";
             }
         }
+    }
+
+    public function getRatio($candleA, $candleB) {
+        return round((($candleA - $candleB) / $candleB) * 100, 2);
+    }
+
+    public function getCandles() {
+        return $this->candles;
+    }
+
+    public function setCandles(array $candles) {
+        return $this->candles = $candles;
+    }
+
+    public function getCandle(int $index) {
+        return $this->candles[$index];
+    }
+
+    public function getWalletA() {
+        return $this->walletA;
+    }
+
+    public function getWalletB() {
+        return $this->walletB;
+    }
+
+    public function setWalletA($wallet) {
+        return $this->walletA = $wallet;
+    }
+
+    public function setWalletB($wallet) {
+        return $this->walletB = $wallet;
     }
 }

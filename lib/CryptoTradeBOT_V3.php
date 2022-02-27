@@ -190,16 +190,16 @@ class CryptoTradeBOT_V3 {
         return round($sum/$period, 4);
     }
 
-    public function makeDecision($currentPrice, $pos = 0) {
+    public function makeDecision($currentPrice, $rsiM30 = 50, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $mA = $this->mobileAverage($pos, 50);
-        $rsi = $this->getRSI(15, $pos);
+        $mA = $this->mobileAverage($pos, 25);
+        $rsi = $this->getRSI(9, $pos);
         
-        if (round($this->getWalletA()->getFunds()) < 10) {
-            if ($rsi < 15 && $this->priceAction($pos) && $mA > $currentPrice) {
-                $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
-                $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
+        if ($this->getWalletA()->getFunds() < 10 && $rsiM30 > 50) {
+            if ($rsi < 10 && $this->priceAction($pos) && $mA > $this->mobileAverage($pos, 7)) {
+                $this->stopLoss = $currentPrice - ($currentPrice * 0.012);
+                $this->takeProfit = $currentPrice + ($currentPrice * 0.025);
                 $this->buy($currentPrice);
             }
         }
@@ -207,10 +207,11 @@ class CryptoTradeBOT_V3 {
         if ($this->getWalletA()->getFunds() > 10) {
             if ($currentPrice <= $this->stopLoss) {
                 $this->sell($currentPrice);
+                $this->winOrLoss($pos);
             } elseif ($currentPrice >= $this->takeProfit) {
                 $this->sell($currentPrice);
+                $this->winOrLoss($pos);
             }
-
         }
     }
 }

@@ -37,19 +37,18 @@ class Strategy extends Simulation {
         }
     }
 
-    public function makeDecision($currentPrice, $pos = 0, $rsiM30 = 50) {
+    public function makeDecision($currentPrice, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $stop = $currentPrice - ($currentPrice * 0.015);
+        $stop = $currentPrice - ($currentPrice * 0.01);
         $mA = $this->mobileAverage($pos, 25);
         $rsi = $this->getRSI(9, $pos);
-        //if ($stop > $this->stopLoss) {
+        //if ($this->stopLoss < $stop)
         //    $this->stopLoss = $stop;
-        //}
-        if ($this->getWalletA()->getFunds() == 0 && $rsiM30 >= 50) {
-            if ($rsi < 10 && $this->priceAction($pos) && $mA > $this->mobileAverage($pos, 7)) {
+        if ($this->getWalletA()->getFunds() == 0) {
+            if ($rsi < 5 && $this->priceAction($pos) && $mA > $currentPrice) {
                 $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
-                $this->takeProfit = $currentPrice + ($currentPrice * 0.023);
+                $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
                 $this->buy($currentPrice);
             }
         }
@@ -57,13 +56,14 @@ class Strategy extends Simulation {
         if ($this->getWalletA()->getFunds() > 0) {
             if ($currentPrice <= $this->stopLoss) {
                 $this->sell($this->stopLoss);
-                $this->winOrLoss($pos, $rsiM30);
+                $this->winOrLoss($pos);
                 //usleep(100000);
             } elseif ($currentPrice >= $this->takeProfit) {
                 $this->sell($this->takeProfit);
-                $this->winOrLoss($pos, $rsiM30);
+                $this->winOrLoss($pos);
                 //usleep(100000);
             }
+
         }
     }
 }
