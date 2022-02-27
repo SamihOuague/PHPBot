@@ -60,6 +60,25 @@ class CryptoTradeBOT_V3 {
         return $rsi;
     }
 
+    public function isHammer($pos) {
+        $candle = $this->getCandle($pos);
+        if ($candle[4] > $candle[1]) {
+            $diffCand = $candle[4] - $candle[1];
+            $diffAvg = $candle[2] - $candle[4];
+            if ($diffAvg / $diffCand > 1)
+                return true;
+        } else {
+            $diffCand = $candle[1] - $candle[4];
+            $diffAvg = $candle[2] - $candle[1];
+            $ratio = 0;
+            if ($diffCand != 0 && $diffAvg != 0)
+                $ratio = $diffAvg / $diffCand;
+            if ($ratio > 1)
+                return true;
+        }
+        return false;
+    }
+
     public function getCandles() {
         return $this->candles;
     }
@@ -158,11 +177,11 @@ class CryptoTradeBOT_V3 {
     }
 
     public function priceAction($pos) {
-        $candleA = $this->getCandle($pos);
-        $candleB = $this->getCandle($pos + 1);
+        $candleA = $this->getCandle($pos + 1);
+        $candleB = $this->getCandle($pos + 2);
         if (($candleA[1] >= $candleB[1]
             && $candleA[4] <= $candleB[4] || $candleA[1] <= $candleB[4]
-            && $candleA[4] >= $candleB[1]) || $this->isHammer($pos)) {
+            && $candleA[4] >= $candleB[1]) || $this->isHammer($pos + 1)) {
             return true;
         } else {
             return false;
