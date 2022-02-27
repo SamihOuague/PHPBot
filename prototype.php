@@ -13,26 +13,40 @@ function mobileAverage($candles, $pos, $period = 7) {
 
 
 $api = new BinanceTradeAPI();
-$candlesH1 = json_decode(file_get_contents("dataset1.json"));
-$candlesM5 = json_decode(file_get_contents("dataset.json"));
 
-$lastPosM5 = count($candlesM5) - 100;
-$lastPosH1 = count($candlesH1) - 1;
-while ($candlesH1[$lastPosH1][0] < $candlesM5[$lastPosM5][0]) {
-    $lastPosH1--;
+$candlesM1 = json_decode(file_get_contents("dataset.json"));
+$candlesM5 = json_decode(file_get_contents("dataset1.json"));
+$candlesM15 = json_decode(file_get_contents("dataset2.json"));
+$candlesM30 = array_reverse($api->getCandles("CHZUSDT", "30m"));
+
+$lastPosM1 = count($candlesM1) - 50000;
+$lastPosM5 = count($candlesM5) - 1;
+$lastPosM15 = count($candlesM15) - 1;
+$lastPosM30 = count($candlesM30) - 1;
+
+
+//while ($candlesM1[$lastPosM1][0] < $candlesM30[$lastPosM30][0]) {
+//    $lastPosM1--;
+//}
+//while ($candlesM5[$lastPosM5][0] < $candlesM30[$lastPosM30][0]) {
+//    $lastPosM5--;
+//}
+//while ($candlesM15[$lastPosM15][0] < $candlesM30[$lastPosM30][0]) {
+//    $lastPosM15--;
+//}
+
+//echo date("Y-m-d H:i:s", $candlesM1[$lastPosM1][0]/1000)."\n";
+//echo date("Y-m-d H:i:s", $candlesM5[$lastPosM5][0]/1000)."\n";
+//echo date("Y-m-d H:i:s", $candlesM15[$lastPosM15][0]/1000)."\n";
+//echo date("Y-m-d H:i:s", $candlesM30[$lastPosM30][0]/1000)."\n";
+//$simulationM15 = new Strategy($candlesM15, 20);
+$simulationM1 = new Strategy($candlesM1, 100);
+
+while($lastPosM1 >= 0) {
+    $simulationM1->makeDecision($candlesM1[$lastPosM1][4], $lastPosM1);
+    $lastPosM1--;   
 }
-$lastPosH1++;
-$lastPosM5++;
-$simulationM5 = new Strategy($candlesM5, 1000);
-$simulationH1 = new Strategy($candlesH1, 1000);
-while($lastPosM5 >= 0) {
-    if (mobileAverage($candlesH1, $lastPosH1) < $candlesH1[$lastPosH1][1]
-        && mobileAverage($candlesH1, $lastPosH1 + 1) < $candlesH1[$lastPosH1 + 1][1]) {
-        $currentPrice = $candlesM5[$lastPosM5][4];
-        $simulationM5->makeDecision($currentPrice, $lastPosM5);
-    }
-    if ($lastPosM5 % 12 == 0) {
-        $lastPosH1--;
-    }
-    $lastPosM5--;
-}
+
+$simulationM1->sell($candlesM1[0][4]);
+echo "WIN RATE => ". round($simulationM1->wins / ($simulationM1->wins + $simulationM1->losses) * 100)."%\n";
+echo "USDT => ". round($simulationM1->getWalletB()->getFunds(), 2)."$\n";

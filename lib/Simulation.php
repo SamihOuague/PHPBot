@@ -12,7 +12,7 @@ class Simulation {
     public $lastLoss;
     public $wins = 0;
     public $losses = 0;
-    public $risk = 0.125;
+    public $risk = 0.25;
 
     public function __construct($dataset, $funds = 100, $sltp = 0.02) {
         $this->setCandles($dataset);

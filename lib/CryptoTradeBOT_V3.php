@@ -146,6 +146,17 @@ class CryptoTradeBOT_V3 {
         }
     }
 
+    public function priceAction($pos) {
+        $candleA = $this->getCandle($pos);
+        $candleB = $this->getCandle($pos + 1);
+        if ($candleA[1] >= $candleB[1]
+            && $candleA[4] <= $candleB[4]) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public function buy($price, $fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
@@ -178,50 +189,27 @@ class CryptoTradeBOT_V3 {
         return round($sum/$period, 4);
     }
 
-    public function isHammer($candle) {
-        if ($candle[4] > $candle[1]) {
-            $diffCand = $candle[4] - $candle[1];
-            $diffAvg = $candle[2] - $candle[4];
-            if ($diffAvg / $diffCand > 1)
-                return true;
-        } else {
-            $diffCand = $candle[1] - $candle[4];
-            $diffAvg = $candle[2] - $candle[1];
-            $ratio = 0;
-            if ($diffCand != 0 && $diffAvg != 0)
-                $ratio = $diffAvg / $diffCand;
-            if ($ratio > 1)
-                return true;
-        }
-        return false;
-    }
-
     public function makeDecision($currentPrice, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $ma7 = $this->mobileAverage($pos);
+        $mA = $this->mobileAverage($pos, 50);
         $rsi = $this->getRSI(15, $pos);
-        $stop = $currentPrice - ($currentPrice * 0.03);
-        if ($this->stopLoss < $stop)
-            $this->stopLoss = $stop;
-
-        if ($this->stopLoss >= $currentPrice && $this->getWalletA()->getFunds() > 10) {
-            $this->sell($currentPrice);
-            $this->winOrLoss($pos);
-        }
-    
-        if ($this->takeProfit <= $currentPrice && round($this->getWalletA()->getFunds(), 2) > 10) {
-            $this->sell($currentPrice);
-            $this->winOrLoss($pos);
+        
+        if (round($this->getWalletA()->getFunds()) < 10) {
+            if ($rsi < 15 && $this->priceAction($pos) && $mA > $currentPrice) {
+                $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
+                $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
+                $this->buy($currentPrice);
+            }
         }
 
-        if ($this->getCandle($pos)[5] < $this->getCandle($pos + 1)[5] 
-            && $this->getCandle($pos + 1)[5] < $this->getCandle($pos + 2)[5] && 
-            $currentPrice < $ma7 && $rsi < 30 && $this->getWalletA()->getFunds() < 10) {
-            //var_dump(date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000));
-            $this->buy($currentPrice);
-            $this->stopLoss = $currentPrice - ($currentPrice * 0.025);
-            $this->takeProfit = $currentPrice + ($currentPrice * 0.045);
+        if ($this->getWalletA()->getFunds() > 10) {
+            if ($currentPrice <= $this->stopLoss) {
+                $this->sell($currentPrice);
+            } elseif ($currentPrice >= $this->takeProfit) {
+                $this->sell($currentPrice);
+            }
+
         }
     }
 }

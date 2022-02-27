@@ -25,61 +25,45 @@ class Strategy extends Simulation {
         return round($sum/$period, 4);
     }
 
-    public function getScore($pos, $currentPrice) {
-        $ma7 = $this->mobileAverage($pos, 7);
-        $ma25 = $this->mobileAverage($pos, 25);
-        $ma99 = $this->mobileAverage($pos, 99);
-        $rsi = $this->getRSI(15, $pos);
-        $score = 0;
-
-        
-        if ($currentPrice < $ma7 && $rsi < 30)
-            $score++;
-
-
-        return $score;
+    public function priceAction($pos) {
+        $candleA = $this->getCandle($pos);
+        $candleB = $this->getCandle($pos + 1);
+        if (($candleA[1] >= $candleB[1]
+            && $candleA[4] <= $candleB[4] || $candleA[1] <= $candleB[4]
+            && $candleA[4] >= $candleB[1]) || $this->isHammer($pos)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function makeDecision($currentPrice, $pos = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $limit = $this->avgCandles($pos);
-        $stop = $currentPrice - ($currentPrice * 0.03);
-        $score = $this->getScore($pos, $currentPrice);
-        $ma7 = $this->mobileAverage($pos, 7);
-        $rsi = $this->getRSI(15, $pos);
-
-        if ($this->stopLoss < $stop)
-            $this->stopLoss = $stop;
-
-        if ($this->stopLoss >= $this->getCandle($pos)[3] && $this->getWalletA()->getFunds() > 0) {
-            $this->sell($this->stopLoss);
-            system("clear");
-            $this->winOrLoss($pos);
-            echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."\n";
-            echo "NOMBRE DE TRADE => ". ($this->wins + $this->losses)."\n";
-            echo "TAUX DE REUSSITE => ". round($this->wins / ($this->wins + $this->losses) * 100, 2)."%\n";
-            usleep(500000);
+        $stop = $currentPrice - ($currentPrice * 0.01);
+        $mA = $this->mobileAverage($pos, 50);
+        $rsi = $this->getRSI(9, $pos);
+        //if ($this->stopLoss < $stop)
+        //    $this->stopLoss = $stop;
+        if ($this->getWalletA()->getFunds() == 0) {
+            if ($rsi < 12 && $this->priceAction($pos) && $mA > $currentPrice) {
+                $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
+                $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
+                $this->buy($currentPrice);
+            }
         }
 
-        if ($this->takeProfit <= $this->getCandle($pos)[2] && round($this->getWalletA()->getFunds(), 2) > 0) {
-            $this->sell($this->takeProfit);
-            system("clear");
-            $this->winOrLoss($pos);
-            echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."\n";
-            echo "NOMBRE DE TRADE => ". ($this->wins + $this->losses)."\n";
-            echo "TAUX DE REUSSITE => ". round($this->wins / ($this->wins + $this->losses) * 100, 2)."%\n";
-            usleep(500000);
-        }
+        if ($this->getWalletA()->getFunds() > 0) {
+            if ($currentPrice <= $this->stopLoss) {
+                $this->sell($this->stopLoss);
+                $this->winOrLoss($pos);
+                //usleep(100000);
+            } elseif ($currentPrice >= $this->takeProfit) {
+                $this->sell($this->takeProfit);
+                $this->winOrLoss($pos);
+                //usleep(100000);
+            }
 
-        if ($this->getCandle($pos)[5] < $this->getCandle($pos + 1)[5] 
-            && $this->getCandle($pos + 1)[5] < $this->getCandle($pos + 2)[5]
-            && $currentPrice < $ma7 
-            && $this->getWalletA()->getFunds() == 0) {
-            //var_dump(date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000));
-            $this->buy($currentPrice);
-            $this->stopLoss = $currentPrice - ($currentPrice * 0.025);
-            $this->takeProfit = $currentPrice + ($currentPrice * 0.045);
         }
     }
 }
