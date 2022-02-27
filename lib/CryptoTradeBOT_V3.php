@@ -23,7 +23,7 @@ class CryptoTradeBOT_V3 {
         $this->stopLoss = round($this->getCandle(0)[4] - ($this->getCandle(0)[4] * 0.01), 4);
         $this->takeProfit = round($this->getCandle(0)[4] + ($this->getCandle(0)[4] * 0.01), 4);
         $this->pairs = $pairs;
-        $this->refreshAccounts();
+        $this->refreshIsolatedAccounts();
         $this->lastFunds = $this->getWalletB()->getFunds();
     }
 
@@ -104,14 +104,25 @@ class CryptoTradeBOT_V3 {
         }
     }
 
-    public function sell($price, $fee = 0.00075) {
+    public function refreshIsolatedAccounts() {
+        $api = $this->api;
+        $accounts = $api->getIsolatedAccounts();
+        for ($i = 0; $i < count($accounts["assets"]); $i++) {
+            if (isset($accounts["assets"][$i]) && $accounts["assets"][$i]["baseAsset"]["asset"] == "CHZ") {
+                $this->setWalletB(new Wallet("USDT", $accounts["assets"][$i]["quoteAsset"]["free"]));
+                $this->setWalletA(new Wallet("CHZ", $accounts["assets"][$i]["baseAsset"]["free"]));
+            }
+        }
+    }
+
+    public function sell($fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $order = $this->api->createOrder($this->pairs, "sell", round($walletA->getFunds()), $price);
+        $order = $this->api->createIsolatedOrder($this->pairs, "SELL", round($walletA->getFunds()));
         if (isset($order["orderId"])) {
-            $orderBis = $this->api->getOrder($this->pairs, $order["orderId"]);
+            $orderBis = $this->api->getIsolatedOrder($this->pairs, $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
-                $orderBis = $this->api->getOrder($this->pairs, $order["orderId"]);
+                $orderBis = $this->api->getIsolatedOrder($this->pairs, $order["orderId"]);
                 system("clear");
                 if (!isset($orderBis) || !isset($orderBis["status"]))
                     return 0;
@@ -121,7 +132,7 @@ class CryptoTradeBOT_V3 {
                 sleep(1);
             }
             $this->lastFunds = $this->getWalletB()->getFunds();
-            $this->refreshAccounts();
+            $this->refreshIsolatedAccounts();
             return $orderBis;
         }
         return 0;
@@ -158,14 +169,15 @@ class CryptoTradeBOT_V3 {
         }
     }
     
-    public function buy($price, $fee = 0.00075) {
+    public function buy($fee = 0.00075) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
-        $order = $this->api->createOrder($this->pairs, "buy", round($walletB->getFunds() * $this->risk), $price);
+        $order = $this->api->createIsolatedOrder($this->pairs, "BUY", round($walletB->getFunds() * $this->risk));
+        var_dump($order);
         if (isset($order["orderId"])) {
-            $orderBis = $this->api->getOrder($this->pairs, $order["orderId"]);
+            $orderBis = $this->api->getIsolatedOrder($this->pairs, $order["orderId"]);
             while (isset($orderBis["status"]) && $orderBis["status"] != "FILLED") {
-                $orderBis = $this->api->getOrder($this->pairs, $order["orderId"]);
+                $orderBis = $this->api->getIsolatedOrder($this->pairs, $order["orderId"]);
                 system("clear");
                 if (!isset($orderBis) || !isset($orderBis["status"]))
                     return 0;
@@ -174,7 +186,7 @@ class CryptoTradeBOT_V3 {
                     return 0;
                 sleep(1);
             }
-            $this->refreshAccounts();
+            $this->refreshIsolatedAccounts();
             $this->winOrLoss();
             return $orderBis;
         }

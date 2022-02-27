@@ -50,6 +50,12 @@ $candlesM1 = json_decode(file_get_contents("dataset.json"));
 $candlesM5 = json_decode(file_get_contents("dataset1.json"));
 $candlesM15 = json_decode(file_get_contents("dataset2.json"));
 $candlesM30 = array_reverse($api->getCandles("CHZUSDT", "30m"));
+sleep(1);
+$start = (time() - (3600 * 500)) * 1000;
+$candlesM30 = array_merge($candlesM30, array_reverse($api->getCandles("CHZUSDT", "30m", $start)));
+sleep(1);
+$start = (time() - (5400 * 500)) * 1000;
+$candlesM30 = array_merge($candlesM30, array_reverse($api->getCandles("CHZUSDT", "30m", $start)));
 
 $lastPosM1 = count($candlesM1) - 50;
 $lastPosM5 = count($candlesM5) - 1;
@@ -72,16 +78,17 @@ while ($candlesM1[$lastPosM1][0] < $candlesM30[$lastPosM30][0]) {
 //echo date("Y-m-d H:i:s", $candlesM15[$lastPosM15][0]/1000)."\n";
 //echo date("Y-m-d H:i:s", $candlesM30[$lastPosM30][0]/1000)."\n";
 //$simulationM15 = new Strategy($candlesM15, 20);
-$simulationM1 = new Strategy($candlesM1, 1000);
+$simulationM1 = new Strategy($candlesM1, 4044);
 
 while($lastPosM1 >= 0) {
-    $simulationM1->makeDecision($candlesM1[$lastPosM1][4], $lastPosM1, getRSI($candlesM30, $lastPosM30));
-    $lastPosM1--;
-    if ($lastPosM1 % 30 == 0) {
-        $lastPosM30--;
+    if(-1 < $lastPosM30) {
+        $simulationM1->makeDecision($candlesM1[$lastPosM1][4], $lastPosM1, getRSI($candlesM30, $lastPosM30));
+        if ($lastPosM1 % 30 == 0)
+            $lastPosM30--;
     }
+    $lastPosM1--;
 }
-//
 $simulationM1->sell($candlesM1[0][4]);
 echo "WIN RATE => ". round($simulationM1->wins / ($simulationM1->wins + $simulationM1->losses) * 100)."%\n";
 echo "USDT => ". round($simulationM1->getWalletB()->getFunds(), 2)."$\n";
+echo ($simulationM1->wins + $simulationM1->losses)."\n";

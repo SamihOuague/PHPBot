@@ -49,7 +49,7 @@ class Strategy extends Simulation {
         if ($this->getWalletA()->getFunds() == 0 && $rsiM30 >= 50) {
             if ($rsi < 10 && $this->priceAction($pos) && $mA > $this->mobileAverage($pos, 7)) {
                 $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
-                $this->takeProfit = $currentPrice + ($currentPrice * 0.023);
+                $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
                 $this->buy($currentPrice);
             }
         }
@@ -58,11 +58,11 @@ class Strategy extends Simulation {
             if ($currentPrice <= $this->stopLoss) {
                 $this->sell($this->stopLoss);
                 $this->winOrLoss($pos, $rsiM30);
-                //usleep(100000);
+                usleep(100000);
             } elseif ($currentPrice >= $this->takeProfit) {
                 $this->sell($this->takeProfit);
                 $this->winOrLoss($pos, $rsiM30);
-                //usleep(100000);
+                usleep(100000);
             }
         }
     }

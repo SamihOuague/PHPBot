@@ -14,7 +14,7 @@ class Simulation {
     public $losses = 0;
     public $risk = 0.5;
 
-    public function __construct($dataset, $funds = 100, $sltp = 0.02) {
+    public function __construct($dataset, $funds = 100) {
         $this->setCandles($dataset);
         $this->setWalletA(new Wallet("CHZ", 0));
         $this->setWalletB(new Wallet("USDT", $funds));

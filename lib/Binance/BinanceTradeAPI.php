@@ -12,6 +12,10 @@ class BinanceTradeAPI extends BinanceConnector {
         return $this->createRequest("/api/v3/account");
     }
 
+    public function getIsolatedAccounts() {
+        return $this->createRequest("/sapi/v1/margin/isolated/account");
+    }
+
     public function getCandles($symbol, $interval="15m", $start="", $end="") {
         $params = [
             "symbol" => $symbol,
@@ -27,7 +31,11 @@ class BinanceTradeAPI extends BinanceConnector {
         return $this->createRequest("/api/v3/order", "GET", ["symbol"=>$symbol, "orderId"=>$orderId]);
     }
 
-    public function createOrder($symbol, $side, $size, $price, $tif="GTC", $type="market") {
+    public function getIsolatedOrder($symbol, $orderId) {
+        return $this->createRequest("/api/v3/order", "GET", ["symbol"=>$symbol, "orderId"=>$orderId]);
+    }
+
+    public function createOrder($symbol, $side, $size, $type="market") {
         $elt = [
             "symbol" => $symbol,
             "side" => $side,
@@ -42,6 +50,20 @@ class BinanceTradeAPI extends BinanceConnector {
                                     "POST", 
                                     $elt,
                                 );
+    }
+    public function createIsolatedOrder($symbol, $side, $size, $type="MARKET") {
+        $elt = [
+            "symbol" => $symbol,
+            "side" => $side,
+            "type" => $type,
+            "isIsolated" => "True",
+        ];
+        if ($side == "BUY") {
+            $elt["quoteOrderQty"] = round(($size - 1), 0, PHP_ROUND_HALF_DOWN); 
+        } else {
+            $elt["quantity"] =  round(($size - 1), 0, PHP_ROUND_HALF_DOWN);
+        }
+        return $this->createRequest("/sapi/v1/margin/order", "POST", $elt);
     }
 
     public function ticker($symbol) {
