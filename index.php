@@ -68,7 +68,7 @@ while (true) {
             }
         }
         system("clear");
-        $bot->makeDecision($tick["price"], getRSI($candlesM30, 0));
+        $bot->makeDecision($tick["price"], getRSI($candlesM30, 0), mobileAverage($candlesM30, 0, 9));
         echo "USDT => ". round($bot->getWalletB()->getFunds() + $bot->getWalletA()->getFunds()*$tick["price"] - ($bot->getWalletA()->getFunds()*$tick["price"] * 0.00075), 4) ."\n";
         echo "price => ". $tick["price"] ." USDT\n";
         if ($bot->getWalletB()->getFunds() < 5) {

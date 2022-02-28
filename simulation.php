@@ -26,8 +26,8 @@ class Strategy extends Simulation {
     }
 
     public function priceAction($pos) {
-        $candleA = $this->getCandle($pos);
-        $candleB = $this->getCandle($pos + 1);
+        $candleA = $this->getCandle($pos + 1);
+        $candleB = $this->getCandle($pos + 2);
         if (($candleA[1] >= $candleB[1]
             && $candleA[4] <= $candleB[4] || $candleA[1] <= $candleB[4]
             && $candleA[4] >= $candleB[1]) || $this->isHammer($pos)) {
@@ -37,7 +37,7 @@ class Strategy extends Simulation {
         }
     }
 
-    public function makeDecision($currentPrice, $pos = 0, $rsiM30 = 50) {
+    public function makeDecision($currentPrice, $pos = 0, $rsiM30 = 50, $maM30 = 0) {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $stop = $currentPrice - ($currentPrice * 0.015);
@@ -47,7 +47,7 @@ class Strategy extends Simulation {
         //    $this->stopLoss = $stop;
         //}
         if ($this->getWalletA()->getFunds() == 0 && $rsiM30 >= 50) {
-            if ($rsi < 10 && $this->priceAction($pos) && $mA > $this->mobileAverage($pos, 7)) {
+            if ($rsi < 20 && $this->priceAction($pos) && $maM30 >= $currentPrice) {
                 $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
                 $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
                 $this->buy($currentPrice);
@@ -61,6 +61,7 @@ class Strategy extends Simulation {
                 usleep(100000);
             } elseif ($currentPrice >= $this->takeProfit) {
                 $this->sell($this->takeProfit);
+                //echo "RSI => ". $maM30." ". $currentPrice;
                 $this->winOrLoss($pos, $rsiM30);
                 usleep(100000);
             }

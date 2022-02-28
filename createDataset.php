@@ -2,7 +2,7 @@
 require_once("lib/Binance/BinanceTradeAPI.php");
 $api = new BinanceTradeAPI();
 $candles = [];
-$index = 100;
+$index = 250;
 $test = $index;
 $time = 60;
 $start = (time() - ($time * 500)) * 1000;

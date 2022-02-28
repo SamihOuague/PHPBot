@@ -12,7 +12,7 @@ class Simulation {
     public $lastLoss;
     public $wins = 0;
     public $losses = 0;
-    public $risk = 0.5;
+    public $risk = 1;
 
     public function __construct($dataset, $funds = 100) {
         $this->setCandles($dataset);
@@ -114,13 +114,13 @@ class Simulation {
             echo date("Y-m-d H:i:s", $this->getCandle($pos)[0]/1000)."\n";
             if ($diff >= 0) {
                 $this->wins++;
-                $this->risk = 0.5;
+                $this->risk = 1;
                 echo "\e[32m+". $diff ." ". $curr ."\n\e[39m";
             } else {
                 $this->losses++;
                 $size = $this->risk * 2;
                 if ($size <= 1)
-                    $this->risk = $size;
+                    $this->risk = 1;
                 echo "\e[31m".$diff." ". $curr ."\n\e[39m";
             }
         }
