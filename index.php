@@ -56,9 +56,14 @@ while (true) {
     if (isset($tick) && isset($tick["price"])) {
         if ((time() - ($candlesM1[0][0] / 1000)) > 60) {
             $cand = $api->getCandles("CHZUSDT", "1m");
+            usleep(500000);
+            $cand1 = $api->getCandles("CHZUSDT", "30m");
             if (is_array($cand)) {
                 $candlesM1 = array_reverse($cand);
                 $bot->setCandles($candlesM1);
+            }
+            if (is_array($cand1)) {
+                $candlesM30 = array_reverse($cand1);
             }
         }
         if ((time() - ($candlesM30[0][0] / 1000)) > 1800) {
