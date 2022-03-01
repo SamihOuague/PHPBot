@@ -51,26 +51,22 @@ $accounts = $api->getAccounts();
 $candlesM1 = array_reverse($api->getCandles("CHZUSDT", "1m"));
 $candlesM30 = array_reverse($api->getCandles("CHZUSDT", "30m"));
 $bot = new CryptoTradeBOT_V3($candlesM1);
+$lastPrice = $api->ticker("CHZUSDT")["price"];
 while (true) {
     $tick = $api->ticker("CHZUSDT");
+    
     if (isset($tick) && isset($tick["price"])) {
-        if ((time() - ($candlesM1[0][0] / 1000)) > 60) {
+        if ($lastPrice != $tick["price"]) {
+            $lastPrice = $tick["price"];
+            usleep(500000);
             $cand = $api->getCandles("CHZUSDT", "1m");
             usleep(500000);
             $cand1 = $api->getCandles("CHZUSDT", "30m");
-            if (is_array($cand)) {
-                $candlesM1 = array_reverse($cand);
-                $bot->setCandles($candlesM1);
-            }
             if (is_array($cand1)) {
+                $candlesM1 = array_reverse($cand);
                 $candlesM30 = array_reverse($cand1);
             }
-        }
-        if ((time() - ($candlesM30[0][0] / 1000)) > 1800) {
-            $cand = $api->getCandles("CHZUSDT", "30m");
-            if (is_array($cand)) {
-                $candlesM30 = array_reverse($cand);
-            }
+            
         }
         system("clear");
         $bot->makeDecision($tick["price"], getRSI($candlesM30, 0), mobileAverage($candlesM30, 0, 9));
@@ -85,5 +81,5 @@ while (true) {
         echo "LAST CANDLE M1 => ". date("Y-m-d H:i:s", ($candlesM1[0][0] / 1000))."\n";
         echo "LAST CANDLE M30 => ". date("Y-m-d H:i:s", ($candlesM30[0][0] / 1000))."\n";
     }
-    sleep(5);
+    sleep(1);
 }
