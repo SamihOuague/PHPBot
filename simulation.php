@@ -45,8 +45,8 @@ class Strategy extends Simulation {
         //if ($stop > $this->stopLoss) {
         //    $this->stopLoss = $stop;
         //}
-        if ($this->getWalletA()->getFunds() == 0 && $rsiM30 >= 50) {
-            if ($rsi < 30 && $this->priceAction($pos) && $maM30 >= $currentPrice) {
+        if ($this->getWalletA()->getFunds() == 0 && $rsiM30 >= 60) {
+            if ($rsi < 27 && $this->priceAction($pos) && $maM30 >= $currentPrice) {
                 $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
                 $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
                 $this->buy($currentPrice);
@@ -56,20 +56,20 @@ class Strategy extends Simulation {
         if ($this->getWalletA()->getFunds() > 0) {
             if ($currentPrice <= $this->stopLoss) {
                 $this->sell($this->stopLoss);
-                system("clear");
+                //system("clear");
                 $this->winOrLoss($pos, $rsiM30);
-                echo "WIN RATE => ". round($this->wins / ($this->wins + $this->losses) * 100)."%\n";
-                echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."$\n";
-                echo ($this->wins + $this->losses)."\n";
-                usleep(100000);
+                //echo "WIN RATE => ". round($this->wins / ($this->wins + $this->losses) * 100)."%\n";
+                //echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."$\n";
+                //echo ($this->wins + $this->losses)."\n";
+                //usleep(100000);
             } elseif ($currentPrice >= $this->takeProfit) {
                 $this->sell($this->takeProfit);
-                system("clear");
+                //system("clear");
                 $this->winOrLoss($pos, $rsiM30);
-                echo "WIN RATE => ". round($this->wins / ($this->wins + $this->losses) * 100)."%\n";
-                echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."$\n";
-                echo ($this->wins + $this->losses)."\n";
-                usleep(100000);
+                //echo "WIN RATE => ". round($this->wins / ($this->wins + $this->losses) * 100)."%\n";
+                //echo "USDT => ". round($this->getWalletB()->getFunds(), 2)."$\n";
+                //echo ($this->wins + $this->losses)."\n";
+                //usleep(100000);
             }
         }
     }

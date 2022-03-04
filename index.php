@@ -48,28 +48,28 @@ $api = new BinanceTradeAPI();
 $accounts = $api->getAccounts();
 
 
-$candlesM1 = array_reverse($api->getCandles("CHZUSDT", "1m"));
-$candlesM30 = array_reverse($api->getCandles("CHZUSDT", "30m"));
+$candlesM1 = array_reverse($api->getCandles("ADAUSDT", "1m"));
+$candlesM30 = array_reverse($api->getCandles("ADAUSDT", "30m"));
 $bot = new CryptoTradeBOT_V3($candlesM1);
-$lastPrice = $api->ticker("CHZUSDT")["price"];
+$lastPrice = $api->ticker("ADAUSDT")["price"];
 while (true) {
-    $tick = $api->ticker("CHZUSDT");
+    $tick = $api->ticker("ADAUSDT");
     
     if (isset($tick) && isset($tick["price"])) {
         if ($lastPrice != $tick["price"]) {
             $lastPrice = $tick["price"];
             usleep(500000);
-            $cand = $api->getCandles("CHZUSDT", "1m");
+            $cand = $api->getCandles("ADAUSDT", "1m");
             usleep(500000);
-            $cand1 = $api->getCandles("CHZUSDT", "30m");
-            if (is_array($cand1)) {
+            $cand1 = $api->getCandles("ADAUSDT", "30m");
+            if (is_array($cand1) && is_array($cand)) {
                 $candlesM1 = array_reverse($cand);
+                $bot->setCandles($candlesM1);
                 $candlesM30 = array_reverse($cand1);
-            }
-            
+            }   
         }
         system("clear");
-        $bot->makeDecision($tick["price"], getRSI($candlesM30, 0), mobileAverage($candlesM30, 0, 9));
+        $bot->makeDecision($tick["price"], getRSI($candlesM30, 1), mobileAverage($candlesM30, 1, 9));
         echo "USDT => ". round($bot->getWalletB()->getFunds() + $bot->getWalletA()->getFunds()*$tick["price"] - ($bot->getWalletA()->getFunds()*$tick["price"] * 0.00075), 4) ."\n";
         echo "price => ". $tick["price"] ." USDT\n";
         if ($bot->getWalletB()->getFunds() < 5) {

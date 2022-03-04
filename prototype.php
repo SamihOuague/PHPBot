@@ -47,10 +47,10 @@ function getRSI($candles, $pos = 0, $period = 15) {
 $api = new BinanceTradeAPI();
 
 $candlesM1 = json_decode(file_get_contents("dataset.json"));
-$candlesM30 = array_reverse($api->getCandles("CHZUSDT", "30m"));
+$candlesM30 = array_reverse($api->getCandles("ADAUSDT", "30m"));
 sleep(1);
 $start = (time() - (3600 * 500)) * 1000;
-$candlesM30 = array_merge($candlesM30, array_reverse($api->getCandles("CHZUSDT", "30m", $start)));
+$candlesM30 = array_merge($candlesM30, array_reverse($api->getCandles("ADAUSDT", "30m", $start)));
 
 
 $lastPosM1 = count($candlesM1) - 50;
@@ -66,7 +66,7 @@ while ($candlesM1[$lastPosM1][0] < $candlesM30[$lastPosM30][0]) {
 //echo date("Y-m-d H:i:s", $candlesM30[$lastPosM30][0]/1000)."\n";
 
 
-$simulationM1 = new Strategy($candlesM1, 10000);
+$simulationM1 = new Strategy($candlesM1, 170);
 
 while($lastPosM1 >= 0) {
     if(-1 < $lastPosM30) {
@@ -78,5 +78,5 @@ while($lastPosM1 >= 0) {
 }
 $simulationM1->sell($candlesM1[0][4]);
 echo "WIN RATE => ". round($simulationM1->wins / ($simulationM1->wins + $simulationM1->losses) * 100)."%\n";
-echo "USDT => ". round($simulationM1->getWalletB()->getFunds(), 2)."$\n";
+echo "USDT => ". (round($simulationM1->getWalletB()->getFunds(), 2))."$\n";
 echo ($simulationM1->wins + $simulationM1->losses)."\n";

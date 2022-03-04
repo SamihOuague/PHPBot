@@ -16,7 +16,7 @@ class CryptoTradeBOT_V3 {
     public $wins = 0;
     public $losses = 0;
 
-    public function __construct($dataset, $pairs = "CHZUSDT") {
+    public function __construct($dataset, $pairs = "ADAUSDT") {
         $this->setCandles($dataset);
         $this->api = new BinanceTradeAPI();
         $this->signal = "none";
@@ -114,8 +114,8 @@ class CryptoTradeBOT_V3 {
             foreach ($accounts["balances"] as $key => $value) {
                 if ($value["asset"] == "USDT")
                     $this->setWalletB(new Wallet("USDT", $value["free"]));
-                elseif ($value["asset"] == "CHZ")
-                    $this->setWalletA(new Wallet("CHZ", $value["free"]));
+                elseif ($value["asset"] == "ADA")
+                    $this->setWalletA(new Wallet("ADA", $value["free"]));
             }
             return 1;
         } else {
@@ -127,9 +127,9 @@ class CryptoTradeBOT_V3 {
         $api = $this->api;
         $accounts = $api->getIsolatedAccounts();
         for ($i = 0; $i < count($accounts["assets"]); $i++) {
-            if (isset($accounts["assets"][$i]) && $accounts["assets"][$i]["baseAsset"]["asset"] == "CHZ") {
+            if (isset($accounts["assets"][$i]) && $accounts["assets"][$i]["baseAsset"]["asset"] == "ADA") {
                 $this->setWalletB(new Wallet("USDT", $accounts["assets"][$i]["quoteAsset"]["free"]));
-                $this->setWalletA(new Wallet("CHZ", $accounts["assets"][$i]["baseAsset"]["free"]));
+                $this->setWalletA(new Wallet("ADA", $accounts["assets"][$i]["baseAsset"]["free"]));
             }
         }
     }
@@ -225,10 +225,10 @@ class CryptoTradeBOT_V3 {
         $walletA = $this->getWalletA();
         $walletB = $this->getWalletB();
         $mA = $this->mobileAverage($pos, 25);
-        $rsi = $this->getRSI(9, $pos);
+        $rsi = $this->getRSI(9, $pos + 1);
         
-        if ($this->getWalletA()->getFunds() < 10 && $rsiM30 >= 50) {
-            if ($rsi < 20 && $this->priceAction($pos) && $maM30 >= $currentPrice) {
+        if ($this->getWalletA()->getFunds() < 10 && $rsiM30 >= 60) {
+            if ($rsi < 27 && $this->priceAction($pos) && $maM30 >= $currentPrice) {
                 $this->stopLoss = $currentPrice - ($currentPrice * 0.01);
                 $this->takeProfit = $currentPrice + ($currentPrice * 0.02);
                 $this->buy($currentPrice);
